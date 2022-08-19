@@ -16,10 +16,14 @@
     - 3.1. Database
         - Create Database
         - Make Schema (Add users later)
+            - `Profanity filter for`:
+                - username
+                - recipe_name
+                - ingredient_name
             - `users` (will add more)
-                | user_id | username | password |
-                |---------|----------|----------|
-                | 1       | user1    | s0m$H@sh |
+                | user_id | username | email    | password |
+                |---------|----------|----------|----------|
+                | 1       | user1    | mail@com | s0m$H@sh |
 
             - `recipes`
                 | recipe_id | recipe_name | creator_id (references user_id) | is_public |
@@ -27,9 +31,9 @@
                 |1          |recipe1      |1                                |TRUE       |
 
             - `ingredients`
-                | ingredient_id | ingredient_name |
-                |---------------|-----------------|
-                | 1             | ingredient1     |
+                | ingredient_id | ingredient_name | is_approved_for_public |
+                |---------------|-----------------|------------------------|
+                | 1             | ingredient1     | TRUE                   |
 
             - `recipe_ingredients`
                 | recipe_id | ingredient_id |
@@ -37,9 +41,9 @@
                 | 1         | 1             |
 
             - `followed_recipes`
-                | user_id | recipe_id |
-                |---------|-----------|
-                | 1       | 1         |
+                | user_id | recipe_id | is_used_for_meal_plan |
+                |---------|-----------|-----------------------|
+                | 1       | 1         | TRUE                  |
 
             - `user_ingredient_scores`
                 | user_id | ingredient_id | score |
@@ -47,8 +51,30 @@
                 | 1       | 1             | 12    |
 
     - 3.2. Server
-        - Connect to Database (find secure way)
+        - Connect to Database (find secure way) (for later)
         - Make RestAPI to interact with Database
+            - `Everything user` (for later, will add more)
+                - Get created recipes
+                - Get followed recipes
+                - Get favourite ingredients
+                - Follow recipe
+                - Unfollow recipe
+                - Select ingredient as favourite/no longer favourite
+            - `Recipes`
+                - Get all recipes
+                - Get recipe by ID
+                - Get recipe ingredients
+                - Create a new recipe
+                - Add ingredient to a recipe (only for private)
+                - Make recipe public (can't make private after)
+                - Change recipe name (only for private)
+                - Delete a recipe (only for private)
+                - Delete ingredient from recipe (only for private)
+            - `Ingredients`
+                - Get all ingredients
+                - Get ingredient by ID
+                - Create an ingredient
+                - Delete an ingredient
 
 4. Make FrontEnd
     - 4.1. Display data from backend
