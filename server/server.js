@@ -1,10 +1,25 @@
+require('dotenv').config();
 const express = require("express");
+const { Pool } = require('pg');
 
 const app = express();
 
+const pool = new Pool({
+    user: "postgres",
+    host: "localhost",
+    database: process.env.PGDATABASE,
+    password: process.env.PGPASSWORD,
+    port: 5432,
+});
+
 // root route for testing
-app.get("/", (req, res) => {
-    res.send("Hello, World!");
+app.get("/", async (req, res) => {
+    try {
+        const users = await pool.query("SELECT * FROM users WHERE user_id=$1", [1]);
+        res.json(users.rows);
+    } catch (error) {
+        console.log(error);
+    }
 });
 
 //////////////
@@ -140,7 +155,7 @@ app.post("/ingredients", (req, res) => {
 // Delete an ingredient
 app.delete("/ingredients/:ingredientId", (req, res) => {
     // TODO delete an ingredient with id req.params.ingredientId
-})
+});
 
 //////////////////
 // Server stuff //
