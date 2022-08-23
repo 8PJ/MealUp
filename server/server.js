@@ -1,22 +1,17 @@
-require('dotenv').config();
+require("dotenv").config();
 const express = require("express");
-const { Pool } = require('pg');
+const db = require("./db");
 
 const app = express();
 
-const pool = new Pool({
-    user: "postgres",
-    host: "localhost",
-    database: process.env.PGDATABASE,
-    password: process.env.PGPASSWORD,
-    port: 5432,
-});
+// middleware
+app.use(express.json());
 
 // root route for testing
 app.get("/", async (req, res) => {
     try {
-        const users = await pool.query("SELECT * FROM users WHERE user_id=$1", [1]);
-        res.json(users.rows);
+        const result = await db.query("SELECT * FROM users WHERE user_id=$1", [1]);
+        res.json(result.rows);
     } catch (error) {
         console.log(error);
     }
@@ -79,13 +74,29 @@ app.delete("followdRecipes/:recipeId", (req, res) => {
 // GET
 
 // Get all recipes
-app.get("/recipes", (req, res) => {
-    // TODO return all recipes
+app.get("/recipes", async (req, res) => {
+    try {
+        const result = await db.query("SELECT * FROM recipes");
+        res.json(result.rows);
+    } catch (error) {
+        console.log(error);
+    }
 });
 
 // Get specific recipe by id
-app.get("/recipes/:recipeId", (req, res) => {
-    // TODO return recipe with id req.params.recipeId
+app.get("/recipes/:recipeId", async (req, res) => {
+    try {
+        const result = await db.query("SELECT * FROM recipes WHERE recipe_id=$1", [req.params.recipeId]);
+
+        if (result.rows.length === 0) {
+            res.sendStatus(404);
+        }
+        else {
+            res.json(result.rows[0]);
+        }
+    } catch (error) {
+        console.log(error);
+    }
 });
 
 // Get all ingredients of a specified recipe
@@ -96,8 +107,17 @@ app.get("/recipes/:recipeId/recipeIngredients", (req, res) => {
 // POST
 
 // Create a new recipe
-app.post("/recipes", (req, res) => {
+app.post("/recipes", async (req, res) => {
     // TODO create a new recipe
+    try {
+        const result = await db.query(
+            "INSERT INTO recipes (recipe_name, creator_id, is_public) VALUES($1, $2, $3) RETURNING *",
+            [req.body.recipe_name, req.body.creator_id, req.body.is_public]
+        );
+        res.json(result.rows[0]);
+    } catch (error) {
+        console.log(error);
+    }
 });
 
 // Add ingredient to recipe
@@ -161,6 +181,8 @@ app.delete("/ingredients/:ingredientId", (req, res) => {
 // Server stuff //
 //////////////////
 
-app.listen(5000, () => {
-    console.log("Server started on port 5000");
+const port = process.env.PORT || 5000;
+console.log(port);
+app.listen(port, () => {
+    console.log(`Server started and listening on port ${port}`);
 });
