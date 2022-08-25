@@ -11,7 +11,7 @@ app.use(express.json());
 app.get("/", async (req, res) => {
     try {
         const result = await db.query(
-            "SELECT * FROM users WHERE user_id=$1",
+            "SELECT * FROM user WHERE user_id=$1",
             [1]
         );
         res.json(result.rows);
@@ -34,7 +34,7 @@ app.get("/users/:userId/createdRecipes", async (req, res) => {
 
     try {
         const result = await db.query(
-            "SELECT * FROM recipes WHERE creator_id=$1",
+            "SELECT * FROM recipe WHERE creator_id=$1",
             [userId]
         );
         res.json(result.rows);
@@ -49,7 +49,7 @@ app.get("/users/:userId/followdRecipes", async (req, res) => {
 
     try {
         const result = await db.query(
-            "SELECT * FROM followed_recipes WHERE user_id=$1",
+            "SELECT * FROM followed_recipe WHERE user_id=$1",
             [userId]
         );
         res.json(result.rows);
@@ -64,7 +64,7 @@ app.get("/users/:userId/favouriteIngredients", async (req, res) => {
 
     try {
         const result = await db.query(
-            "SELECT * FROM user_ingredient_scores WHERE user_id=$1 AND is_favourite=TRUE",
+            "SELECT * FROM user_ingredient_score WHERE user_id=$1 AND is_favourite=TRUE",
             [userId]
         );
         res.json(result.rows);
@@ -84,7 +84,7 @@ app.post("/users", async (req, res) => {
 
     try {
         const result = await db.query(
-            "INSERT INTO users (username, email, password) VALUES($1, $2, $3) RETURNING *",
+            "INSERT INTO user (username, email, password) VALUES($1, $2, $3) RETURNING *",
             [username, email, password]
         );
         res.json(result.rows[0]);
@@ -104,7 +104,7 @@ app.post("/users/:userId/followdRecipes", (req, res) => {
 
     try {
         const result = db.query(
-            "INSERT INTO followed_recipes (user_id, recipe_id, is_used_for_meal_plan) VALUES ($1, $2, $3) RETURNING *",
+            "INSERT INTO followed_recipe (user_id, recipe_id, is_used_for_meal_plan) VALUES ($1, $2, $3) RETURNING *",
             [userId, recipe_id, is_used_for_meal_plan]
         );
         res.json(result.rows[0]);
@@ -124,7 +124,7 @@ app.patch("favouriteIngredients/:ingredientId", async (req, res) => {
 
     try {
         const result = await db.query(
-            "UPDATE user_ingredient_scores SET is_favourite=$1 WHERE ingredient_id=$2 RETURNING *",
+            "UPDATE user_ingredient_score SET is_favourite=$1 WHERE ingredient_id=$2 RETURNING *",
             [is_favourite, ingredientId]
         );
         res.json(result.rows[0]);
@@ -142,7 +142,7 @@ app.delete("followdRecipes/:recipeId", async (req, res) => {
 
     try {
         const result = await db.query(
-            "DELETE FROM followed_recipes WEHRE user_id=$1 AND recipe_id=$2",
+            "DELETE FROM followed_recipe WEHRE user_id=$1 AND recipe_id=$2",
             [user_id, recipeId]
         );
         res.sendStatus(204); // no content
@@ -160,7 +160,7 @@ app.delete("followdRecipes/:recipeId", async (req, res) => {
 // Get all recipes
 app.get("/recipes", async (req, res) => {
     try {
-        const result = await db.query("SELECT * FROM recipes");
+        const result = await db.query("SELECT * FROM recipe");
         res.json(result.rows);
     } catch (error) {
         console.log(error);
@@ -173,7 +173,7 @@ app.get("/recipes/:recipeId", async (req, res) => {
 
     try {
         const result = await db.query(
-            "SELECT * FROM recipes WHERE recipe_id=$1",
+            "SELECT * FROM recipe WHERE recipe_id=$1",
             [recipeId]
         );
 
@@ -195,7 +195,7 @@ app.get("/recipes/:recipeId/recipeIngredients", async (req, res) => {
     try {
         const result = await db.query(
             `SELECT (ingredient_id, ingredient_name, is_approved_for_public)
-             FROM recipe_ingredients INNER JOIN ingredients 
+             FROM recipe_ingredient INNER JOIN ingredient
                 USING (ingredient_id)
              WHERE recipe_id=$1`,
             [recipeId]
@@ -216,7 +216,7 @@ app.post("/recipes", async (req, res) => {
 
     try {
         const result = await db.query(
-            "INSERT INTO recipes (recipe_name, creator_id, is_public) VALUES($1, $2, $3) RETURNING *",
+            "INSERT INTO recipe (recipe_name, creator_id, is_public) VALUES($1, $2, $3) RETURNING *",
             [recipe_name, creator_id, is_public]
         );
         res.json(result.rows[0]);
@@ -235,7 +235,7 @@ app.post("/recipes/:recipeId/recipeIngredients", async (req, res) => {
     // Check if recipe is private
     try {
         const result = await db.query(
-            "SELECT * FROM recipes WHERE recipe_id=$1",
+            "SELECT * FROM recipe WHERE recipe_id=$1",
             [recipeId]
         );
 
@@ -254,7 +254,7 @@ app.post("/recipes/:recipeId/recipeIngredients", async (req, res) => {
     // Add ingredient to recipe
     try {
         const result = await db.query(
-            "INSERT INTO recipe_ingredients (recipe_id, ingredient_id) VALUES ($1, $2)",
+            "INSERT INTO recipe_ingredient (recipe_id, ingredient_id) VALUES ($1, $2)",
             [recipeId, ingredient_id]
         );
         res.sendStatus(204); // no data
@@ -279,7 +279,7 @@ app.patch("/recipes/:recipeId", async (req, res) => {
     // check if recipe is private (can't alter public recipe)
     try {
         const result = await db.query(
-            "SELECT * FROM recipes WHERE recipe_id=$1",
+            "SELECT * FROM recipe WHERE recipe_id=$1",
             [recipeId]
         );
 
@@ -303,7 +303,7 @@ app.patch("/recipes/:recipeId", async (req, res) => {
 
     try {
         const result = await db.query(
-            "UPDATE recipes SET recipe_name=$1, is_public=$2 WHERE recipe_id=$3 RETURNING *",
+            "UPDATE recipe SET recipe_name=$1, is_public=$2 WHERE recipe_id=$3 RETURNING *",
             [recipe_name, is_public, recipeId]
         );
         res.json(result.rows[0]);
@@ -320,7 +320,7 @@ app.delete("/recipes/:recipeId", async (req, res) => {
 
     try {
         const result = await db.query(
-            "DELETE FROM recipes WHERE recipe_id=$1",
+            "DELETE FROM recipe WHERE recipe_id=$1",
             [recipeId]
         );
         res.sendStatus(204); // no content
@@ -336,7 +336,7 @@ app.delete("/recipeIngredients/:ingredientId", async (req, res) => {
 
     try {
         const result = await db.query(
-            "DELETE FROM recipe_ingredients WHERE recipe_id=$1 AND ingredient_id=$2",
+            "DELETE FROM recipe_ingredient WHERE recipe_id=$1 AND ingredient_id=$2",
             [recipe_id, ingredientId]
         );
         res.sendStatus(204); // no content
@@ -354,7 +354,7 @@ app.delete("/recipeIngredients/:ingredientId", async (req, res) => {
 // Get all ingredients
 app.get("/ingredients", async (req, res) => {
     try {
-        const result = await db.query("SELECT FROM ingredients");
+        const result = await db.query("SELECT FROM ingredient");
         res.json(result.rows);
     } catch (error) {
         console.log(error);
@@ -367,7 +367,7 @@ app.get("/ingredients/:ingredientId", (req, res) => {
 
     try {
         const result = await db.query(
-            "SELECT FROM ingredients WHERE ingredient_id=$1",
+            "SELECT FROM ingredient WHERE ingredient_id=$1",
             [ingredientId]
         );
 
@@ -392,7 +392,7 @@ app.post("/ingredients", async (req, res) => {
 
     try {
         const result = await db.query(
-            "INSERT INTO ingredients (ingredient_name, is_approved_for_public) VALUES ($1, $2) RETURNING *",
+            "INSERT INTO ingredient (ingredient_name, is_approved_for_public) VALUES ($1, $2) RETURNING *",
             [ingredient_name, is_approved_for_public]
         );
         res.json(result.rows[0]);
@@ -409,7 +409,7 @@ app.delete("/ingredients/:ingredientId", (req, res) => {
 
     try {
         const result = db.query(
-            "DELETE FROM ingredients WHERE ingredient_id=$1",
+            "DELETE FROM ingredient WHERE ingredient_id=$1",
             [ingredientId]
         );
         res.sendStatus(204); // no content
