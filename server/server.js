@@ -172,7 +172,10 @@ app.get("/recipes/:recipeId", async (req, res) => {
     const { recipeId } = req.params;
 
     try {
-        const result = await db.query("SELECT * FROM recipes WHERE recipe_id=$1", [recipeId]);
+        const result = await db.query(
+            "SELECT * FROM recipes WHERE recipe_id=$1",
+            [recipeId]
+        );
 
         if (result.rows.length === 0) {
             res.sendStatus(404); // not found
