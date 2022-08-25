@@ -343,8 +343,6 @@ app.delete("/recipeIngredients/:ingredientId", async (req, res) => {
     } catch (error) {
         console.log(error);
     }
-    // TODO delete ingredient with id req.params.ingredientId
-    // from recipe with id req.body.recipeId
 });
 
 /////////////////////
