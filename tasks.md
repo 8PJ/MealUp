@@ -91,4 +91,6 @@
         - sudo service postgresql stop - to stop running your database
     - 1.2. Terminal
         - sudo -u postgres psql - to open postgres terminal
+    - 1.3. Tables
+        - ALTER SEQUENCE product_id_seq RESTART WITH 1453 - change serial number
 

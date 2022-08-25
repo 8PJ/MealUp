@@ -26,29 +26,48 @@ app.get("/", async (req, res) => {
 // GET
 
 // Get all recipes created by a user
-app.get("/users/:userId/createdRecipes/", (req, res) => {
+app.get("/users/:userId/createdRecipes", (req, res) => {
     // TODO return all recipes created by a
     // user with id req.params.userId
 });
 
 // Get all recipes followed by a user
-app.get("/users/:userId/followdRecipes/", (req, res) => {
+app.get("/users/:userId/followdRecipes", (req, res) => {
     // TODO return all recipes followed by a
     // user with id req.params.userId
 });
 
 // Get all favourited ingredients by a user
-app.get("/users/:userId/favouriteIngredients/", (req, res) => {
+app.get("/users/:userId/favouriteIngredients", (req, res) => {
     // TODO return all ingredients favourited by a
     // user with id req.params.userId
 });
 
 // POST
+
+// Create a new user
+app.post("/users", async (req, res) => {
+    const { username, email, password } = req.body;
+
+    // TODO check if all inputs are defined and valid
+    // TODO hash passwrods
+
+    try {
+        const result = await db.query(
+            "INSERT INTO users (username, email, password) VALUES($1, $2, $3) RETURNING *",
+            [username, email, password]
+        );
+        res.json(result.rows[0]);
+    } catch (error) {
+        console.log(error);
+    }
+});
+
 // NOTE - create new recipes using recipe APIs
 
 // Add a recipe to user's followed recipes
-app.post("/users/:userId/followdRecipes/", (req, res) => {
-    // add a recipe to user's (id: req.params.userId) followed recipes
+app.post("/users/:userId/followdRecipes", (req, res) => {
+    // TODO add a recipe to user's (id: req.params.userId) followed recipes
 });
 
 // PATCH
@@ -108,11 +127,14 @@ app.get("/recipes/:recipeId/recipeIngredients", (req, res) => {
 
 // Create a new recipe
 app.post("/recipes", async (req, res) => {
-    // TODO create a new recipe
+    const { recipe_name, creator_id, is_public } = req.body;
+
+    // TODO check if all inputs are defined and valid
+
     try {
         const result = await db.query(
             "INSERT INTO recipes (recipe_name, creator_id, is_public) VALUES($1, $2, $3) RETURNING *",
-            [req.body.recipe_name, req.body.creator_id, req.body.is_public]
+            [recipe_name, creator_id, is_public]
         );
         res.json(result.rows[0]);
     } catch (error) {
@@ -166,8 +188,20 @@ app.get("/ingredients/:ingredientId", (req, res) => {
 // POST
 
 // Create a new ingredient
-app.post("/ingredients", (req, res) => {
-    // TODO create a new ingredient
+app.post("/ingredients", async (req, res) => {
+    const { ingredient_name, is_approved_for_public } = req.body;
+
+    // TODO check if all inputs are defined and valid
+
+    try {
+        const result = await db.query(
+            "INSERT INTO ingredients (ingredient_name, is_approved_for_public) VALUES ($1, $2) RETURNING *",
+            [ingredient_name, is_approved_for_public]
+        );
+        res.json(result.rows[0]);
+    } catch (error) {
+        console.log(error);
+    }
 });
 
 // DELETE
