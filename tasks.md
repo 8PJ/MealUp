@@ -54,6 +54,7 @@
         - Connect to Database (find secure way) (for later)
         - Make RestAPI to interact with Database
             - `Everything user` (for later, will add more)
+                - Create a new user
                 - Get created recipes
                 - Get followed recipes
                 - Get favourite ingredients

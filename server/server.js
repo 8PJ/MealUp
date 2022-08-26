@@ -1,5 +1,6 @@
 require("dotenv").config();
 const express = require("express");
+const bcrypt = require("bcrypt");
 const db = require("./db");
 
 const app = express();
@@ -11,7 +12,7 @@ app.use(express.json());
 app.get("/", async (req, res) => {
     try {
         const result = await db.query(
-            "SELECT * FROM user WHERE user_id=$1",
+            "SELECT * FROM app_user WHERE user_id=$1",
             [1]
         );
         res.json(result.rows);
@@ -20,9 +21,47 @@ app.get("/", async (req, res) => {
     }
 });
 
-//////////////
-// user APIs//
-//////////////
+////////////////////
+// non API routes //
+////////////////////
+
+// Log in user
+app.post("/login", async (req, res) => {
+    const { username, password } = req.body;
+
+    // TODO check if all inputs are defined and valid
+
+    // check if username exists and validate password
+    try {
+        const result = await db.query(
+            "SELECT password FROM app_user WHERE username=$1",
+            [username]
+        );
+
+        if (result.rows.length === 0) {
+            res.status(404).json({ "error": "The username or password is incorrect" });
+            return;
+        }
+
+        hash = result.rows[0]["password"];
+
+        const match = await bcrypt.compare(password, hash);
+
+        if (match) {
+            res.json({ "success": "You have successfylly logged in" });
+        }
+        else {
+            res.status(404).json({ "error": "The username or password is incorrect" });
+        }
+
+    } catch (error) {
+        console.log(error);
+    }
+});
+
+///////////////
+// user APIs //
+///////////////
 
 // TODO add all user API endpoints
 
@@ -80,12 +119,61 @@ app.post("/users", async (req, res) => {
     const { username, email, password } = req.body;
 
     // TODO check if all inputs are defined and valid
-    // TODO hash passwrods
+
+    // check if password has at least 8 characters
+    if (password.length < 8) {
+        res.status(400).json({ "error": "Password must be at least 8 characters long" });
+        return;
+    }
+
+    // check if password is at most 60 characters
+    if (password.length > 60) {
+        res.status(400).json({ "error": "Password must not contain more than 60 characters" });
+        return;
+    }
+
+    // check if password only contains letters, numbers and the following symbols: ! "#$%&'()*+,-./:;<=>?@[\]^_{|}~
+    if (!/^[ -~]*$/.test(password.test)) {
+        res.status(400).json({ "error": "Password may only contain letters, numbers and the following symbols: ! \"#$%&'()*+,-./:;<=>?@[\\]^_{|}~" });
+        return;
+    }
+
+    // check if username is available
+    try {
+        const result = await db.query(
+            "SELECT * FROM app_user WHERE username=$1",
+            [username]
+        );
+        if (result.rows.length > 0) {
+            res.status(400).json({ "error": "Username already used" });
+            return;
+        }
+    } catch (error) {
+        console.log(error);
+    }
+
+    // check if email is available
+    try {
+        const result = await db.query(
+            "SELECT * FROM app_user WHERE email=$1",
+            [email]
+        );
+        if (result.rows.length > 0) {
+            res.status(400).json({ "error": "Email already used" });
+            return;
+        }
+    } catch (error) {
+        console.log(error);
+    }
+
+    // hash password
+    const saltRounds = 12;
+    const hash = await bcrypt.hash(password, saltRounds);
 
     try {
         const result = await db.query(
-            "INSERT INTO user (username, email, password) VALUES($1, $2, $3) RETURNING *",
-            [username, email, password]
+            "INSERT INTO app_user (username, email, password, time_created) VALUES($1, $2, $3, NOW()) RETURNING *",
+            [username, email, hash]
         );
         res.json(result.rows[0]);
     } catch (error) {
@@ -362,7 +450,7 @@ app.get("/ingredients", async (req, res) => {
 });
 
 // Get specific ingredient by id
-app.get("/ingredients/:ingredientId", (req, res) => {
+app.get("/ingredients/:ingredientId", async (req, res) => {
     const { ingredientId } = req.params;
 
     try {
