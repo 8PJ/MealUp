@@ -12,7 +12,7 @@ require("./auth/sessionAuth")(app);
 // middleware
 app.use(express.json());
 
-// root route for testing
+// root route for testing (will later serve react app)
 app.get("/", async (req, res) => {
     try {
         const result = await db.query(
@@ -23,6 +23,7 @@ app.get("/", async (req, res) => {
         res.json(result.rows);
     } catch (error) {
         console.log(error);
+        res.status(500).json({ message: "Server error." });
     }
 });
 
@@ -36,7 +37,7 @@ app.post("/login", async (req, res, next) => {
         res.json({ message: "You are already logged in." });
         return;
     }
-    
+
     // authenticate a user usning local passport strategy
     passport.authenticate("local", (error, user, info) => {
         if (error) {
@@ -80,21 +81,26 @@ app.get("/users/:userId/createdRecipes", async (req, res) => {
         res.json(result.rows);
     } catch (error) {
         console.log(error);
+        res.status(500).json({ message: "Server error." });
     }
 });
 
 // Get all recipes followed by a user
-app.get("/users/:userId/followdRecipes", async (req, res) => {
+app.get("/users/:userId/followedRecipes", async (req, res) => {
     const { userId } = req.params;
 
     try {
         const result = await db.query(
-            "SELECT * FROM followed_recipe WHERE user_id=$1",
+            `SELECT recipe_id, recipe_name, creator_id, is_public
+             FROM followed_recipe INNER JOIN recipe 
+                USING(recipe_id)
+             WHERE user_id=$1`,
             [userId]
         );
         res.json(result.rows);
     } catch (error) {
         console.log(error);
+        res.status(500).json({ message: "Server error." });
     }
 });
 
@@ -110,6 +116,7 @@ app.get("/users/:userId/favouriteIngredients", async (req, res) => {
         res.json(result.rows);
     } catch (error) {
         console.log(error);
+        res.status(500).json({ message: "Server error." });
     }
 });
 
@@ -151,6 +158,8 @@ app.post("/users", async (req, res) => {
         }
     } catch (error) {
         console.log(error);
+        res.status(500).json({ message: "Server error." });
+        return;
     }
 
     // check if email is available
@@ -165,6 +174,8 @@ app.post("/users", async (req, res) => {
         }
     } catch (error) {
         console.log(error);
+        res.status(500).json({ message: "Failed to log in." });
+        return;
     }
 
     // hash password
@@ -173,70 +184,77 @@ app.post("/users", async (req, res) => {
 
     try {
         const result = await db.query(
-            "INSERT INTO app_user (username, email, password, time_created) VALUES($1, $2, $3, NOW()) RETURNING *",
-            [username, email, hash]
+            "INSERT INTO app_user (username, email, password, time_created, is_admin) VALUES($1, $2, $3, NOW(), $4) RETURNING *",
+            [username, email, hash, false]
         );
         res.json(result.rows[0]);
     } catch (error) {
         console.log(error);
+        res.status(500).json({ message: "Server error." });
     }
 });
 
 // NOTE - create new recipes using recipe APIs
 
 // Add a recipe to user's followed recipes
-app.post("/users/:userId/followdRecipes", (req, res) => {
+app.post("/users/:userId/followedRecipes", async (req, res) => {
     const { recipe_id, is_used_for_meal_plan } = req.body;
     const { userId } = req.params;
 
     // TODO check if all inputs are defined and valid
+    // TODO check if the recipe is not already followed
 
     try {
-        const result = db.query(
+        const result = await db.query(
             "INSERT INTO followed_recipe (user_id, recipe_id, is_used_for_meal_plan) VALUES ($1, $2, $3) RETURNING *",
             [userId, recipe_id, is_used_for_meal_plan]
         );
         res.json(result.rows[0]);
     } catch (error) {
         console.log(error);
+        res.status(500).json({ message: "Server error." });
     }
 });
 
 // PATCH
 
 // Favourite/unfavourite an ingredient for a user
-app.patch("favouriteIngredients/:ingredientId", async (req, res) => {
-    const { is_favourite } = req.body;
+app.patch("/favouriteIngredients/:ingredientId", async (req, res) => {
+    const { user_id, is_favourite } = req.body;
     const { ingredientId } = req.params;
 
     // TODO check if all inputs are defined and valid
 
     try {
         const result = await db.query(
-            "UPDATE user_ingredient_score SET is_favourite=$1 WHERE ingredient_id=$2 RETURNING *",
-            [is_favourite, ingredientId]
+            "UPDATE user_ingredient_score SET is_favourite=$1 WHERE user_id=$2 AND ingredient_id=$3 RETURNING *",
+            [is_favourite, user_id, ingredientId]
         );
         res.json(result.rows[0]);
     } catch (error) {
         console.log(error);
+        res.status(500).json({ message: "Server error." });
     }
 });
 
 // DELETE
 
 // Delete a recipe from user's followed recipes
-app.delete("followdRecipes/:recipeId", async (req, res) => {
+app.delete("/followedRecipes/:recipeId", async (req, res) => {
     const { user_id } = req.body;
     const { recipeId } = req.params;
 
+    // TODO check if all inputs are defined and valid
+
     try {
         const result = await db.query(
-            "DELETE FROM followed_recipe WEHRE user_id=$1 AND recipe_id=$2",
+            "DELETE FROM followed_recipe WHERE user_id=$1 AND recipe_id=$2",
             [user_id, recipeId]
         );
-        res.sendStatus(204); // no content
+        res.json({ message: "Deleted successfully." }); // no content
     } catch (error) {
         console.log(error);
+        res.status(500).json({ message: "Server error." });
     }
 });
 
@@ -253,6 +271,7 @@ app.get("/recipes", async (req, res) => {
         res.json(result.rows);
     } catch (error) {
         console.log(error);
+        res.status(500).json({ message: "Server error." });
     }
 });
 
@@ -274,6 +293,7 @@ app.get("/recipes/:recipeId", async (req, res) => {
         }
     } catch (error) {
         console.log(error);
+        res.status(500).json({ message: "Server error." });
     }
 });
 
@@ -283,7 +303,7 @@ app.get("/recipes/:recipeId/recipeIngredients", async (req, res) => {
 
     try {
         const result = await db.query(
-            `SELECT (ingredient_id, ingredient_name, is_approved_for_public)
+            `SELECT ingredient_id, ingredient_name, is_approved_for_public
              FROM recipe_ingredient INNER JOIN ingredient
                 USING (ingredient_id)
              WHERE recipe_id=$1`,
@@ -292,6 +312,7 @@ app.get("/recipes/:recipeId/recipeIngredients", async (req, res) => {
         res.json(result.rows);
     } catch (error) {
         console.log(error);
+        res.status(500).json({ message: "Server error." });
     }
 });
 
@@ -311,6 +332,7 @@ app.post("/recipes", async (req, res) => {
         res.json(result.rows[0]);
     } catch (error) {
         console.log(error);
+        res.status(500).json({ message: "Server error." });
     }
 });
 
@@ -338,34 +360,38 @@ app.post("/recipes/:recipeId/recipeIngredients", async (req, res) => {
         }
     } catch (error) {
         console.log(error);
+        res.status(500).json({ message: "Server error." });
+        return;
     }
 
     // Add ingredient to recipe
     try {
         const result = await db.query(
-            "INSERT INTO recipe_ingredient (recipe_id, ingredient_id) VALUES ($1, $2)",
+            "INSERT INTO recipe_ingredient (recipe_id, ingredient_id) VALUES ($1, $2) RETURNING *",
             [recipeId, ingredient_id]
         );
-        res.sendStatus(204); // no data
+        res.json(result.rows[0]);
     } catch (error) {
         console.log(error);
+        res.status(500).json({ message: "Server error." });
     }
 });
 
 // PATCH
 
 // Make recipe public or change its name (reject all other changes)
-app.patch("/recipes/:recipeId", async (req, res) => {
-    const { recipe_name, is_public } = req.body;
+app.put("/recipes/:recipeId", async (req, res) => {
+    const { recipe_name, creator_id, is_public } = req.body;
     const { recipeId } = req.params;
 
     // TODO check if all inputs are defined and valid
-    if (recipe_name === undefined || is_public === undefined) {
+    if (recipe_name === undefined && is_public === undefined) {
         res.sendStatus(400); // bad request
         return;
     }
 
     // check if recipe is private (can't alter public recipe)
+    // check if recipe creator_is is not being changed
     try {
         const result = await db.query(
             "SELECT * FROM recipe WHERE recipe_id=$1",
@@ -376,17 +402,20 @@ app.patch("/recipes/:recipeId", async (req, res) => {
             res.sendStatus(404); // not found
             return;
         }
-        else if (result.rows[0].is_public) {
+
+        if (result.rows[0].is_public) {
+            res.sendStatus(403); // forbbiden
+            return;
+        }
+
+        // if creator id is being changed
+        if (result.rows[0].creator_id === creator_id) {
             res.sendStatus(403); // forbbiden
             return;
         }
     } catch (error) {
         console.log(error);
-    }
-
-    // check if is_public is true (can only set private recipe to public not vice versa)
-    if (is_public === false) {
-        res.sendStatus(403); // forbbiden
+        res.status(500).json({ message: "Server error." });
         return;
     }
 
@@ -398,6 +427,7 @@ app.patch("/recipes/:recipeId", async (req, res) => {
         res.json(result.rows[0]);
     } catch (error) {
         console.log(error);
+        res.status(500).json({ message: "Server error." });
     }
 });
 
@@ -407,6 +437,28 @@ app.patch("/recipes/:recipeId", async (req, res) => {
 app.delete("/recipes/:recipeId", async (req, res) => {
     const { recipeId } = req.params;
 
+    // check if recipe is public (cannot delete public recipes)
+    try {
+        const result = await db.query(
+            "SELECT * FROM recipe WHERE recipe_id=$1",
+            [recipeId]
+        );
+
+        if (result.rows.length === 0) {
+            res.sendStatus(404); // not found
+            return;
+        }
+
+        if (result.rows[0].is_public) {
+            res.sendStatus(403); // forbbiden
+            return;
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Server error." });
+        return;
+    }
+
     try {
         const result = await db.query(
             "DELETE FROM recipe WHERE recipe_id=$1",
@@ -415,6 +467,7 @@ app.delete("/recipes/:recipeId", async (req, res) => {
         res.sendStatus(204); // no content
     } catch (error) {
         console.log(error);
+        res.status(500).json({ message: "Server error." });
     }
 });
 
@@ -431,6 +484,7 @@ app.delete("/recipeIngredients/:ingredientId", async (req, res) => {
         res.sendStatus(204); // no content
     } catch (error) {
         console.log(error);
+        res.status(500).json({ message: "Server error." });
     }
 });
 
@@ -443,10 +497,11 @@ app.delete("/recipeIngredients/:ingredientId", async (req, res) => {
 // Get all ingredients
 app.get("/ingredients", async (req, res) => {
     try {
-        const result = await db.query("SELECT FROM ingredient");
+        const result = await db.query("SELECT * FROM ingredient");
         res.json(result.rows);
     } catch (error) {
         console.log(error);
+        res.status(500).json({ message: "Server error." });
     }
 });
 
@@ -456,7 +511,7 @@ app.get("/ingredients/:ingredientId", async (req, res) => {
 
     try {
         const result = await db.query(
-            "SELECT FROM ingredient WHERE ingredient_id=$1",
+            "SELECT * FROM ingredient WHERE ingredient_id=$1",
             [ingredientId]
         );
 
@@ -468,6 +523,7 @@ app.get("/ingredients/:ingredientId", async (req, res) => {
         }
     } catch (error) {
         console.log(error);
+        res.status(500).json({ message: "Server error." });
     }
 });
 
@@ -487,6 +543,7 @@ app.post("/ingredients", async (req, res) => {
         res.json(result.rows[0]);
     } catch (error) {
         console.log(error);
+        res.status(500).json({ message: "Server error." });
     }
 });
 
@@ -496,6 +553,8 @@ app.post("/ingredients", async (req, res) => {
 app.delete("/ingredients/:ingredientId", (req, res) => {
     const { ingredientId } = req.params;
 
+    // TODO can only be deleted by an admin
+
     try {
         const result = db.query(
             "DELETE FROM ingredient WHERE ingredient_id=$1",
@@ -504,8 +563,8 @@ app.delete("/ingredients/:ingredientId", (req, res) => {
         res.sendStatus(204); // no content
     } catch (error) {
         console.log(error);
+        res.status(500).json({ message: "Server error." });
     }
-    // TODO delete an ingredient with id req.params.ingredientId
 });
 
 //////////////////

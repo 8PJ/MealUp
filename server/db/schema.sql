@@ -3,7 +3,8 @@ CREATE TABLE IF NOT EXISTS app_user (
     username VARCHAR(255) UNIQUE NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(100) NOT NULL,
-    time_created TIMESTAMPTZ NOT NULL
+    time_created TIMESTAMPTZ NOT NULL,
+    is_admin BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE IF NOT EXISTS recipe (
@@ -20,14 +21,14 @@ CREATE TABLE IF NOT EXISTS ingredient (
 );
 
 CREATE TABLE IF NOT EXISTS recipe_ingredient (
-    recipe_id BIGINT REFERENCES recipe (recipe_id) NOT NULL,
+    recipe_id BIGINT REFERENCES recipe (recipe_id) NOT NULL ON DELETE CASCADE,
     ingredient_id BIGINT REFERENCES ingredient (ingredient_id) NOT NULL,
     PRIMARY KEY (recipe_id, ingredient_id)
 );
 
 CREATE TABLE IF NOT EXISTS followed_recipe (
     user_id BIGINT REFERENCES app_user (user_id) NOT NULL,
-    recipe_id BIGINT REFERENCES recipe (recipe_id) NOT NULL,
+    recipe_id BIGINT REFERENCES recipe (recipe_id) NOT NULL ON DELETE CASCADE,
     is_used_for_meal_plan BOOLEAN NOT NULL,
     PRIMARY KEY (user_id, recipe_id)
 );
