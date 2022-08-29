@@ -3,7 +3,11 @@ const express = require("express");
 const bcrypt = require("bcrypt");
 const db = require("./db");
 
+const passport = require("./auth/passportAuth");
+
 const app = express();
+
+require("./auth/sessionAuth")(app);
 
 // middleware
 app.use(express.json());
@@ -15,6 +19,7 @@ app.get("/", async (req, res) => {
             "SELECT * FROM app_user WHERE user_id=$1",
             [1]
         );
+        console.log(result.rows);
         res.json(result.rows);
     } catch (error) {
         console.log(error);
@@ -26,37 +31,33 @@ app.get("/", async (req, res) => {
 ////////////////////
 
 // Log in user
-app.post("/login", async (req, res) => {
-    const { username, password } = req.body;
-
-    // TODO check if all inputs are defined and valid
-
-    // check if username exists and validate password
-    try {
-        const result = await db.query(
-            "SELECT password FROM app_user WHERE username=$1",
-            [username]
-        );
-
-        if (result.rows.length === 0) {
-            res.status(404).json({ "error": "The username or password is incorrect" });
+app.post("/login", async (req, res, next) => {
+    if (req.isAuthenticated()) {
+        res.json({ message: "You are already logged in." });
+        return;
+    }
+    
+    // authenticate a user usning local passport strategy
+    passport.authenticate("local", (error, user, info) => {
+        if (error) {
+            console.log(error);
+            res.status(500).json({ message: "Failed to log in." });
+            return;
+        }
+        if (!user) {
+            res.status(401).json({ message: info.message });
             return;
         }
 
-        hash = result.rows[0]["password"];
-
-        const match = await bcrypt.compare(password, hash);
-
-        if (match) {
-            res.json({ "success": "You have successfylly logged in" });
-        }
-        else {
-            res.status(404).json({ "error": "The username or password is incorrect" });
-        }
-
-    } catch (error) {
-        console.log(error);
-    }
+        // if authenticated successfully, log them in
+        req.logIn(user, (error2) => {
+            if (error2) {
+                res.status(500).json({ message: "Failed to log in." });
+                return;
+            }
+            res.json({ message: "You have successfylly logged in" });
+        });
+    })(req, res, next);
 });
 
 ///////////////
@@ -122,19 +123,19 @@ app.post("/users", async (req, res) => {
 
     // check if password has at least 8 characters
     if (password.length < 8) {
-        res.status(400).json({ "error": "Password must be at least 8 characters long" });
+        res.status(400).json({ message: "Password must be at least 8 characters long." });
         return;
     }
 
     // check if password is at most 60 characters
     if (password.length > 60) {
-        res.status(400).json({ "error": "Password must not contain more than 60 characters" });
+        res.status(400).json({ message: "Password must not contain more than 60 characters." });
         return;
     }
 
     // check if password only contains letters, numbers and the following symbols: ! "#$%&'()*+,-./:;<=>?@[\]^_{|}~
     if (!/^[ -~]*$/.test(password.test)) {
-        res.status(400).json({ "error": "Password may only contain letters, numbers and the following symbols: ! \"#$%&'()*+,-./:;<=>?@[\\]^_{|}~" });
+        res.status(400).json({ message: "Password may only contain letters, numbers and the following symbols: ! \"#$%&'()*+,-./:;<=>?@[\\]^_{|}~" });
         return;
     }
 
@@ -145,7 +146,7 @@ app.post("/users", async (req, res) => {
             [username]
         );
         if (result.rows.length > 0) {
-            res.status(400).json({ "error": "Username already used" });
+            res.status(400).json({ message: "Username already used." });
             return;
         }
     } catch (error) {
@@ -159,7 +160,7 @@ app.post("/users", async (req, res) => {
             [email]
         );
         if (result.rows.length > 0) {
-            res.status(400).json({ "error": "Email already used" });
+            res.status(400).json({ message: "Email already used." });
             return;
         }
     } catch (error) {
@@ -511,8 +512,7 @@ app.delete("/ingredients/:ingredientId", (req, res) => {
 // Server stuff //
 //////////////////
 
-const port = process.env.PORT || 5000;
-console.log(port);
-app.listen(port, () => {
-    console.log(`Server started and listening on port ${port}`);
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+    console.log(`Server started and listening on port ${PORT}`);
 });
