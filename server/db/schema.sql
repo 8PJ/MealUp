@@ -9,8 +9,9 @@ CREATE TABLE IF NOT EXISTS app_user (
 
 CREATE TABLE IF NOT EXISTS recipe (
     recipe_id BIGSERIAL PRIMARY KEY,
-    recipe_name VARCHAR(255) NOT NULL,
     creator_id BIGINT REFERENCES app_user (user_id) NOT NULL,
+    recipe_name VARCHAR(255) NOT NULL,
+    recipe_instructions VARCHAR(2000) NOT NULL,
     is_public BOOLEAN NOT NULL
 );
 
@@ -21,14 +22,16 @@ CREATE TABLE IF NOT EXISTS ingredient (
 );
 
 CREATE TABLE IF NOT EXISTS recipe_ingredient (
-    recipe_id BIGINT REFERENCES recipe (recipe_id) NOT NULL ON DELETE CASCADE,
+    recipe_id BIGINT REFERENCES recipe (recipe_id) ON DELETE CASCADE NOT NULL,
     ingredient_id BIGINT REFERENCES ingredient (ingredient_id) NOT NULL,
+    amount INTEGER NOT NULL,
+    measurement VARCHAR(30) NOT NULL,
     PRIMARY KEY (recipe_id, ingredient_id)
 );
 
 CREATE TABLE IF NOT EXISTS followed_recipe (
     user_id BIGINT REFERENCES app_user (user_id) NOT NULL,
-    recipe_id BIGINT REFERENCES recipe (recipe_id) NOT NULL ON DELETE CASCADE,
+    recipe_id BIGINT REFERENCES recipe (recipe_id) ON DELETE CASCADE NOT NULL,
     is_used_for_meal_plan BOOLEAN NOT NULL,
     PRIMARY KEY (user_id, recipe_id)
 );
@@ -37,6 +40,6 @@ CREATE TABLE IF NOT EXISTS user_ingredient_score (
     user_id BIGINT REFERENCES app_user (user_id) NOT NULL,
     ingredient_id BIGINT REFERENCES ingredient (ingredient_id) NOT NULL,
     is_favourite BOOLEAN NOT NULL,
-    score BIGINT NOT NULL,
+    score BIGINT NOT NULL CHECK(score >= 0) DEFAULT 10,
     PRIMARY KEY (user_id, ingredient_id)
 );
