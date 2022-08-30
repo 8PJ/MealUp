@@ -75,7 +75,8 @@ app.get("/users/:userId/createdRecipes", async (req, res) => {
 
     try {
         const result = await db.query(
-            "SELECT * FROM recipe WHERE creator_id=$1",
+            `SELECT recipe_id, recipe_name, creator_id, is_public
+             FROM recipe WHERE creator_id=$1`,
             [userId]
         );
         res.json(result.rows);
@@ -110,7 +111,10 @@ app.get("/users/:userId/favouriteIngredients", async (req, res) => {
 
     try {
         const result = await db.query(
-            "SELECT * FROM user_ingredient_score WHERE user_id=$1 AND is_favourite=TRUE",
+            `SELECT ingredient_id, ingredient_name
+             FROM user_ingredient_score INNER JOIN ingredient 
+                USING(ingredient_id)
+             WHERE user_id=$1 AND is_favourite=TRUE`,
             [userId]
         );
         res.json(result.rows);
@@ -184,7 +188,9 @@ app.post("/users", async (req, res) => {
 
     try {
         const result = await db.query(
-            "INSERT INTO app_user (username, email, password, time_created, is_admin) VALUES($1, $2, $3, NOW(), $4) RETURNING *",
+            `INSERT INTO app_user (username, email, password, time_created, is_admin)
+             VALUES($1, $2, $3, NOW(), $4)
+             RETURNING user_id, username, email`,
             [username, email, hash, false]
         );
         res.json(result.rows[0]);
@@ -203,13 +209,14 @@ app.post("/users/:userId/followedRecipes", async (req, res) => {
 
     // TODO check if all inputs are defined and valid
     // TODO check if the recipe is not already followed
+    // TODO check if recipe exists
 
     try {
         const result = await db.query(
-            "INSERT INTO followed_recipe (user_id, recipe_id, is_used_for_meal_plan) VALUES ($1, $2, $3) RETURNING *",
+            "INSERT INTO followed_recipe (user_id, recipe_id, is_used_for_meal_plan) VALUES ($1, $2, $3)",
             [userId, recipe_id, is_used_for_meal_plan]
         );
-        res.json(result.rows[0]);
+        res.json({ message: "Recipe successfully followed." });
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Server error." });
@@ -224,13 +231,17 @@ app.patch("/favouriteIngredients/:ingredientId", async (req, res) => {
     const { ingredientId } = req.params;
 
     // TODO check if all inputs are defined and valid
+    // TODO check if ingredient exists
 
     try {
+        // TODO if there is no entry for an ingredient, create one
+
         const result = await db.query(
-            "UPDATE user_ingredient_score SET is_favourite=$1 WHERE user_id=$2 AND ingredient_id=$3 RETURNING *",
+            "UPDATE user_ingredient_score SET is_favourite=$1 WHERE user_id=$2 AND ingredient_id=$3",
             [is_favourite, user_id, ingredientId]
         );
-        res.json(result.rows[0]);
+        const change = is_favourite ? "favourited" : "unfavourited";
+        res.json({ message: `Ingredient successfully ${change}.` });
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Server error." });
@@ -251,7 +262,7 @@ app.delete("/followedRecipes/:recipeId", async (req, res) => {
             "DELETE FROM followed_recipe WHERE user_id=$1 AND recipe_id=$2",
             [user_id, recipeId]
         );
-        res.json({ message: "Deleted successfully." }); // no content
+        res.json({ message: "Recipe successfully unfollowed." });
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Server error." });
@@ -267,7 +278,10 @@ app.delete("/followedRecipes/:recipeId", async (req, res) => {
 // Get all recipes
 app.get("/recipes", async (req, res) => {
     try {
-        const result = await db.query("SELECT * FROM recipe");
+        const result = await db.query(
+            `SELECT recipe_id, recipe_name, creator_id, is_public 
+             FROM recipe`
+        );
         res.json(result.rows);
     } catch (error) {
         console.log(error);
@@ -281,12 +295,13 @@ app.get("/recipes/:recipeId", async (req, res) => {
 
     try {
         const result = await db.query(
-            "SELECT * FROM recipe WHERE recipe_id=$1",
+            `SELECT recipe_id, recipe_name, creator_id, is_public
+             FROM recipe WHERE recipe_id=$1`,
             [recipeId]
         );
 
         if (result.rows.length === 0) {
-            res.sendStatus(404); // not found
+            res.status(404).json({message: "Recipe not found."}); // not found
         }
         else {
             res.json(result.rows[0]);
@@ -303,7 +318,7 @@ app.get("/recipes/:recipeId/recipeIngredients", async (req, res) => {
 
     try {
         const result = await db.query(
-            `SELECT ingredient_id, ingredient_name, is_approved_for_public
+            `SELECT ingredient_id, ingredient_name
              FROM recipe_ingredient INNER JOIN ingredient
                 USING (ingredient_id)
              WHERE recipe_id=$1`,
@@ -320,14 +335,16 @@ app.get("/recipes/:recipeId/recipeIngredients", async (req, res) => {
 
 // Create a new recipe
 app.post("/recipes", async (req, res) => {
-    const { recipe_name, creator_id, is_public } = req.body;
+    const { recipe_name, creator_id } = req.body;
 
     // TODO check if all inputs are defined and valid
 
     try {
         const result = await db.query(
-            "INSERT INTO recipe (recipe_name, creator_id, is_public) VALUES($1, $2, $3) RETURNING *",
-            [recipe_name, creator_id, is_public]
+            `INSERT INTO recipe (recipe_name, creator_id, is_public)
+             VALUES($1, $2, $3)
+             RETURNING recipe_id, recipe_name, creator_id, is_public`,
+            [recipe_name, creator_id, false]
         );
         res.json(result.rows[0]);
     } catch (error) {
@@ -343,7 +360,7 @@ app.post("/recipes/:recipeId/recipeIngredients", async (req, res) => {
 
     // TODO check if all inputs are defined and valid
 
-    // Check if recipe is private
+    // check if recipe is public (cannot add ingredients to public recipes)
     try {
         const result = await db.query(
             "SELECT * FROM recipe WHERE recipe_id=$1",
@@ -351,11 +368,12 @@ app.post("/recipes/:recipeId/recipeIngredients", async (req, res) => {
         );
 
         if (result.rows.length === 0) {
-            res.sendStatus(404); // not found
+            res.status(404).json({ message: "Recipe not found." }); // not found
             return;
         }
-        else if (result.rows[0].is_public) {
-            res.sendStatus(403);
+
+        if (result.rows[0].is_public) {
+            res.status(403).json({ message: "Cannot add ingredients to public recipes." });
             return;
         }
     } catch (error) {
@@ -367,17 +385,17 @@ app.post("/recipes/:recipeId/recipeIngredients", async (req, res) => {
     // Add ingredient to recipe
     try {
         const result = await db.query(
-            "INSERT INTO recipe_ingredient (recipe_id, ingredient_id) VALUES ($1, $2) RETURNING *",
+            "INSERT INTO recipe_ingredient (recipe_id, ingredient_id) VALUES ($1, $2)",
             [recipeId, ingredient_id]
         );
-        res.json(result.rows[0]);
+        res.json({ message: "Ingredient successfully added to the recipe." });
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Server error." });
     }
 });
 
-// PATCH
+// PUT
 
 // Make recipe public or change its name (reject all other changes)
 app.put("/recipes/:recipeId", async (req, res) => {
@@ -385,8 +403,8 @@ app.put("/recipes/:recipeId", async (req, res) => {
     const { recipeId } = req.params;
 
     // TODO check if all inputs are defined and valid
-    if (recipe_name === undefined && is_public === undefined) {
-        res.sendStatus(400); // bad request
+    if (recipe_name === undefined || creator_id === undefined || is_public === undefined) {
+        res.status(400).json({message: "Must provide recipe_name, creator_id and is_public"}); // bad request
         return;
     }
 
@@ -399,18 +417,18 @@ app.put("/recipes/:recipeId", async (req, res) => {
         );
 
         if (result.rows.length === 0) {
-            res.sendStatus(404); // not found
+            res.status(404).json({ message: "Recipe not found." }); // not found
             return;
         }
 
         if (result.rows[0].is_public) {
-            res.sendStatus(403); // forbbiden
+            res.status(403).json({ message: "Cannot alter public recipes." }); // forbbiden
             return;
         }
 
         // if creator id is being changed
-        if (result.rows[0].creator_id === creator_id) {
-            res.sendStatus(403); // forbbiden
+        if (result.rows[0].creator_id !== creator_id) {
+            res.status(403).json({ message: "Cannot change creator ID." }); // forbbiden
             return;
         }
     } catch (error) {
@@ -421,7 +439,10 @@ app.put("/recipes/:recipeId", async (req, res) => {
 
     try {
         const result = await db.query(
-            "UPDATE recipe SET recipe_name=$1, is_public=$2 WHERE recipe_id=$3 RETURNING *",
+            `UPDATE recipe 
+             SET recipe_name=$1, is_public=$2 
+             WHERE recipe_id=$3 
+             RETURNING recipe_id, recipe_name, creator_id, is_public`,
             [recipe_name, is_public, recipeId]
         );
         res.json(result.rows[0]);
@@ -445,12 +466,12 @@ app.delete("/recipes/:recipeId", async (req, res) => {
         );
 
         if (result.rows.length === 0) {
-            res.sendStatus(404); // not found
+            res.status(404).json({ message: "Recipe not found." }); // not found
             return;
         }
 
         if (result.rows[0].is_public) {
-            res.sendStatus(403); // forbbiden
+            res.status(403).json({ message: "Cannot delete public recipes" }); // forbbiden
             return;
         }
     } catch (error) {
@@ -464,7 +485,7 @@ app.delete("/recipes/:recipeId", async (req, res) => {
             "DELETE FROM recipe WHERE recipe_id=$1",
             [recipeId]
         );
-        res.sendStatus(204); // no content
+        res.json({ message: "Recipe successfully deleted." });
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Server error." });
@@ -476,12 +497,34 @@ app.delete("/recipeIngredients/:ingredientId", async (req, res) => {
     const { recipe_id } = req.body;
     const { ingredientId } = req.params;
 
+    // check if recipe is public (cannot delete ingredients from public recipes)
+    try {
+        const result = await db.query(
+            "SELECT * FROM recipe WHERE recipe_id=$1",
+            [recipe_id]
+        );
+
+        if (result.rows.length === 0) {
+            res.status(404).json({ message: "Recipe not found." }); // not found
+            return;
+        }
+
+        if (result.rows[0].is_public) {
+            res.status(403).json({ message: "Cannot delete public recipes" }); // forbbiden
+            return;
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Server error." });
+        return;
+    }
+
     try {
         const result = await db.query(
             "DELETE FROM recipe_ingredient WHERE recipe_id=$1 AND ingredient_id=$2",
             [recipe_id, ingredientId]
         );
-        res.sendStatus(204); // no content
+        res.json({ message: "Ingredient successfully removed from a recipe." });
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Server error." });
@@ -497,7 +540,10 @@ app.delete("/recipeIngredients/:ingredientId", async (req, res) => {
 // Get all ingredients
 app.get("/ingredients", async (req, res) => {
     try {
-        const result = await db.query("SELECT * FROM ingredient");
+        const result = await db.query(
+            `SELECT ingredient_id, ingredient_name 
+             FROM ingredient`
+        );
         res.json(result.rows);
     } catch (error) {
         console.log(error);
@@ -511,12 +557,14 @@ app.get("/ingredients/:ingredientId", async (req, res) => {
 
     try {
         const result = await db.query(
-            "SELECT * FROM ingredient WHERE ingredient_id=$1",
+            `SELECT ingredient_id, ingredient_name
+             FROM ingredient
+             WHERE ingredient_id=$1`,
             [ingredientId]
         );
 
         if (result.rows.length === 0) {
-            res.sendStatus(404); // not found
+            res.status(404).json({ message: "Ingredient not found." }); // not found
         }
         else {
             res.json(result.rows[0]);
@@ -531,14 +579,18 @@ app.get("/ingredients/:ingredientId", async (req, res) => {
 
 // Create a new ingredient
 app.post("/ingredients", async (req, res) => {
-    const { ingredient_name, is_approved_for_public } = req.body;
+    const { ingredient_name } = req.body;
 
     // TODO check if all inputs are defined and valid
+    // TODO if ingredient passes profanity check aprove it for public
+    const isApproved = false;
 
     try {
         const result = await db.query(
-            "INSERT INTO ingredient (ingredient_name, is_approved_for_public) VALUES ($1, $2) RETURNING *",
-            [ingredient_name, is_approved_for_public]
+            `INSERT INTO ingredient (ingredient_name, is_approved_for_public)
+             VALUES ($1, $2)
+             RETURNING ingredient_id, ingredient_name`,
+            [ingredient_name, isApproved]
         );
         res.json(result.rows[0]);
     } catch (error) {
@@ -550,17 +602,35 @@ app.post("/ingredients", async (req, res) => {
 // DELETE
 
 // Delete an ingredient
-app.delete("/ingredients/:ingredientId", (req, res) => {
+app.delete("/ingredients/:ingredientId", async (req, res) => {
     const { ingredientId } = req.params;
 
     // TODO can only be deleted by an admin
+    // TODO check if ingredient is not used by any recipe
+
+    // check if ingredient exists
+    try {
+        const result = await db.query(
+            "SELECT * FROM ingredient WHERE ingredient_id=$1",
+            [ingredientId]
+        );
+
+        if (result.rows.length === 0) {
+            res.status(404).json({ message: "Ingredient not found." }); // not found
+            return;
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Server error." });
+        return;
+    }
 
     try {
-        const result = db.query(
+        const result = await db.query(
             "DELETE FROM ingredient WHERE ingredient_id=$1",
             [ingredientId]
         );
-        res.sendStatus(204); // no content
+        res.status(200).json({ message: "Ingredient successfullt deleted." }); // no content
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Server error." });
