@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS recipe (
 
 CREATE TABLE IF NOT EXISTS ingredient (
     ingredient_id BIGSERIAL PRIMARY KEY,
-    ingredient_name VARCHAR(255) NOT NULL,
+    ingredient_name VARCHAR(255) UNIQUE NOT NULL,
     is_approved_for_public BOOLEAN NOT NULL
 );
 

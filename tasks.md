@@ -95,3 +95,7 @@
     - 1.3. Tables
         - ALTER SEQUENCE product_id_seq RESTART WITH 1453 - change serial number
 
+2. Environment
+    = 2.2. Kill a process at a specific port
+        - sudo kill -9 $(sudo lsof -t -i:5000)
+

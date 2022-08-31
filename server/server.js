@@ -4,6 +4,7 @@ const bcrypt = require("bcrypt");
 const db = require("./db");
 
 const passport = require("./auth/passportAuth");
+const { isDefined, existsInDB } = require("./functions/validation");
 
 const app = express();
 
@@ -73,6 +74,26 @@ app.post("/login", async (req, res, next) => {
 app.get("/users/:userId/createdRecipes", async (req, res) => {
     const { userId } = req.params;
 
+    // check if userId is defined and of the right type
+    if (!isDefined(userId) || isNaN(userId)) {
+        res.status(400).json({ message: "Must provide a valid userID" });
+        return;
+    }
+
+    // check if user exists
+    try {
+        const queryString = "SELECT * FROM app_user WHERE user_id=$1";
+
+        if (!await existsInDB(queryString, [userId])) {
+            res.status(404).json({ message: "User not found." });
+            return;
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Server error." });
+        return;
+    }
+
     try {
         const result = await db.query(
             `SELECT recipe_id, creator_id, recipe_name, recipe_instructions, is_public
@@ -89,6 +110,26 @@ app.get("/users/:userId/createdRecipes", async (req, res) => {
 // Get all recipes followed by a user
 app.get("/users/:userId/followedRecipes", async (req, res) => {
     const { userId } = req.params;
+
+    // check if userId is defined and of the right type
+    if (!isDefined(userId) || isNaN(userId)) {
+        res.status(400).json({ message: "Must provide a valid userID" });
+        return;
+    }
+
+    // check if user exists
+    try {
+        const queryString = "SELECT * FROM app_user WHERE user_id=$1";
+
+        if (!await existsInDB(queryString, [userId])) {
+            res.status(404).json({ message: "User not found." });
+            return;
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Server error." });
+        return;
+    }
 
     try {
         const result = await db.query(
@@ -109,13 +150,33 @@ app.get("/users/:userId/followedRecipes", async (req, res) => {
 app.get("/users/:userId/favouriteIngredients", async (req, res) => {
     const { userId } = req.params;
 
+    // check if userId is defined and of the right type
+    if (!isDefined(userId) || isNaN(userId)) {
+        res.status(400).json({ message: "Must provide a valid userID" }); 
+        return;
+    }
+
+    // check if user exists
+    try {
+        const queryString = "SELECT * FROM app_user WHERE user_id=$1";
+
+        if (!await existsInDB(queryString, [userId])) {
+            res.status(404).json({ message: "User not found." }); 
+            return;
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Server error." });
+        return;
+    }
+
     try {
         const result = await db.query(
             `SELECT ingredient_id, ingredient_name
              FROM user_ingredient_score INNER JOIN ingredient 
                 USING(ingredient_id)
-             WHERE user_id=$1 AND is_favourite=TRUE`,
-            [userId]
+             WHERE user_id=$1 AND is_favourite=$2`,
+            [userId, true]
         );
         res.json(result.rows);
     } catch (error) {
@@ -130,33 +191,57 @@ app.get("/users/:userId/favouriteIngredients", async (req, res) => {
 app.post("/users", async (req, res) => {
     const { username, email, password } = req.body;
 
-    // TODO check if all inputs are defined and valid
-
-    // check if password has at least 8 characters
-    if (password.length < 8) {
-        res.status(400).json({ message: "Password must be at least 8 characters long." });
+    // check if all parameters are defined 
+    if (!isDefined(username, email, password)) {
+        res.status(400).json({ message: "Must provide a username, email and password" }); 
         return;
     }
 
-    // check if password is at most 60 characters
-    if (password.length > 60) {
-        res.status(400).json({ message: "Password must not contain more than 60 characters." });
+    // ----- username checks -----
+
+    // check if username is only made up of letters and numbers
+    if (!/^[A-Za-z0-9]*$/.test(username)) {
+        res.status(400).json({ message: "Username must only contain letters and numbers." });
+        return;
+    }
+
+    // check if username has at least 4 and at most 35 characters
+    if (username.length < 4 || username.length > 35) {
+        res.status(400).json({ message: "Username must be at least 4 and at most 35 characters long." });
+        return;
+    }
+
+    // ----- email checks -----
+
+    // TODO implement email verification with a link
+
+    // check if the email is of mostly valid form
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+        res.status(400).json({ message: "Email must be valid." });
+        return;
+    }
+
+    // ----- password checks -----
+
+    // check if password has at least 8 and at most 60 characters
+    if (password.length < 8 || password.length > 60) {
+        res.status(400).json({ message: "Password must be at least 8 and at most 60 characters long." });
         return;
     }
 
     // check if password only contains letters, numbers and the following symbols: ! "#$%&'()*+,-./:;<=>?@[\]^_{|}~
-    if (!/^[ -~]*$/.test(password.test)) {
-        res.status(400).json({ message: "Password may only contain letters, numbers and the following symbols: ! \"#$%&'()*+,-./:;<=>?@[\\]^_{|}~" });
+    if (!/^[ -~]*$/.test(password)) {
+        res.status(400).json({ message: "Password must only contain letters, numbers and the following symbols: ! \"#$%&'()*+,-./:;<=>?@[\\]^_{|}~" });
         return;
     }
 
+    // ----- check username and email availability -----
+
     // check if username is available
     try {
-        const result = await db.query(
-            "SELECT * FROM app_user WHERE username=$1",
-            [username]
-        );
-        if (result.rows.length > 0) {
+        const queryString = "SELECT * FROM app_user WHERE username=$1";
+
+        if (!await existsInDB(queryString, [username])) {
             res.status(400).json({ message: "Username already used." });
             return;
         }
@@ -168,24 +253,25 @@ app.post("/users", async (req, res) => {
 
     // check if email is available
     try {
-        const result = await db.query(
-            "SELECT * FROM app_user WHERE email=$1",
-            [email]
-        );
-        if (result.rows.length > 0) {
+        const queryString = "SELECT * FROM app_user WHERE email=$1";
+
+        if (!await existsInDB(queryString, [email])) {
             res.status(400).json({ message: "Email already used." });
             return;
         }
     } catch (error) {
         console.log(error);
-        res.status(500).json({ message: "Failed to log in." });
+        res.status(500).json({ message: "Server error." });
         return;
     }
+
+    // ----- create user -----
 
     // hash password
     const saltRounds = 12;
     const hash = await bcrypt.hash(password, saltRounds);
 
+    // create user
     try {
         const result = await db.query(
             `INSERT INTO app_user (username, email, password, time_created, is_admin)
@@ -198,18 +284,67 @@ app.post("/users", async (req, res) => {
         console.log(error);
         res.status(500).json({ message: "Server error." });
     }
-});
 
-// NOTE - create new recipes using recipe APIs
+    // TODO log user in after registering
+});
 
 // Add a recipe to user's followed recipes
 app.post("/users/:userId/followedRecipes", async (req, res) => {
     const { recipe_id, is_used_for_meal_plan } = req.body;
     const { userId } = req.params;
 
-    // TODO check if all inputs are defined and valid
-    // TODO check if the recipe is not already followed
-    // TODO check if recipe exists
+    // check if all parameters are defined and of correct type
+    if (
+        !isDefined(userId, recipe_id, is_used_for_meal_plan)
+        || isNaN(userId)
+        || isNaN(recipe_id)
+        || typeof (is_used_for_meal_plan) !== "boolean"
+    ) {
+        res.status(400).json({ message: "Must provide a valid userID, recipe_id and is_used_for_meal_plan." }); 
+        return;
+    }
+
+    // check if user exists
+    try {
+        const queryString = "SELECT * FROM app_user WHERE user_id=$1";
+
+        if (!await existsInDB(queryString, [userId])) {
+            res.status(404).json({ message: "User not found." }); 
+            return;
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Server error." });
+        return;
+    }
+
+    // check if recipe exists
+    try {
+        const queryString = "SELECT * FROM recipe WHERE recipe_id=$1";
+
+        if (!await existsInDB(queryString, [recipe_id])) {
+            res.status(404).json({ message: "Recipe not found." }); 
+            return;
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Server error." });
+        return;
+    }
+
+    // check if recipe is not already followed
+    try {
+        const queryString = "SELECT * FROM followed_recipe WHERE user_id=$1 AND recipe_id=$2";
+
+        if (await existsInDB(queryString, [userId, recipe_id])) {
+            res.status(400).json({ message: "Recipe already followed." });
+            return;
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Server error." });
+        return;
+    }
 
     try {
         const result = await db.query(
@@ -230,8 +365,44 @@ app.patch("/favouriteIngredients/:ingredientId", async (req, res) => {
     const { user_id, is_favourite } = req.body;
     const { ingredientId } = req.params;
 
-    // TODO check if all inputs are defined and valid
-    // TODO check if ingredient exists
+    // check if all parameters are defined and of correct type
+    if (
+        !isDefined(user_id, ingredientId, is_favourite)
+        || isNaN(user_id)
+        || isNaN(ingredientId)
+        || typeof (is_favourite) !== "boolean"
+    ) {
+        res.status(400).json({ message: "Must provide a valid user_id, ingredientID and is_favourite." }); 
+        return;
+    }
+
+    // check if user exists
+    try {
+        const queryString = "SELECT * FROM app_user WHERE user_id=$1";
+
+        if (!await existsInDB(queryString, [user_id])) {
+            res.status(404).json({ message: "User not found." }); 
+            return;
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Server error." });
+        return;
+    }
+
+    // check if ingredient exists
+    try {
+        const queryString = "SELECT * FROM ingredient WHERE ingredient_id=$1";
+
+        if (!await existsInDB(queryString, [ingredientId])) {
+            res.status(404).json({ message: "Ingredient not found." }); 
+            return;
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Server error." });
+        return;
+    }
 
     // if there is no entry for an ingredient for this user, create one
     try {
@@ -240,7 +411,7 @@ app.patch("/favouriteIngredients/:ingredientId", async (req, res) => {
             [user_id, ingredientId]
         );
 
-        if (result.rows.length === 0) {
+        if (result.rowCount === 0) {
             const resultInsert = await db.query(
                 `INSERT INTO user_ingredient_score (user_id, ingredient_id, is_favourite, score)
                  VALUES($1, $2, $3, DEFAULT)`,
@@ -276,8 +447,53 @@ app.delete("/followedRecipes/:recipeId", async (req, res) => {
     const { user_id } = req.body;
     const { recipeId } = req.params;
 
-    // TODO check if all inputs are defined and valid
-    // TODO return 404 if requested item to delete doesn't exist
+    // check if all parameters are defined and of correct type
+    if (!isDefined(user_id, recipeId) || isNaN(user_id) || isNaN(recipeId)) {
+        res.status(400).json({ message: "Must provide a valid user_id and recipeID." }); 
+        return;
+    }
+
+    // check if user exists
+    try {
+        const queryString = "SELECT * FROM app_user WHERE user_id=$1";
+
+        if (!await existsInDB(queryString, [user_id])) {
+            res.status(404).json({ message: "User not found." }); 
+            return;
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Server error." });
+        return;
+    }
+
+    // check if recipe exists
+    try {
+        const queryString = "SELECT * FROM recipe WHERE recipe_id=$1";
+
+        if (!await existsInDB(queryString, [recipeId])) {
+            res.status(404).json({ message: "Recipe not found." }); 
+            return;
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Server error." });
+        return;
+    }
+
+    // check if user follows the recipe
+    try {
+        const queryString = "SELECT * FROM followed_recipe WHERE user_id=$1 AND recipe_id=$2";
+
+        if (!await existsInDB(queryString, [user_id, recipeId])) {
+            res.status(404).json({ message: "User doesn't follow this recipe." });
+            return;
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Server error." });
+        return;
+    }
 
     try {
         const result = await db.query(
@@ -294,6 +510,8 @@ app.delete("/followedRecipes/:recipeId", async (req, res) => {
 /////////////////
 // recipe APIs //
 /////////////////
+
+// TODO write API to add and remove recipes from being used for a meal plan
 
 // GET
 
@@ -315,7 +533,11 @@ app.get("/recipes", async (req, res) => {
 app.get("/recipes/:recipeId", async (req, res) => {
     const { recipeId } = req.params;
 
-    // TODO check if all inputs are defined and valid
+    // check if all parameters are defined and of correct type
+    if (!isDefined(recipeId) || isNaN(recipeId)) {
+        res.status(400).json({ message: "Must provide a valid recipeID." }); 
+        return;
+    }
 
     try {
         const result = await db.query(
@@ -323,9 +545,9 @@ app.get("/recipes/:recipeId", async (req, res) => {
              FROM recipe WHERE recipe_id=$1`,
             [recipeId]
         );
-
-        if (result.rows.length === 0) {
-            res.status(404).json({message: "Recipe not found."}); // not found
+        console.log(result);
+        if (result.rowCount === 0) {
+            res.status(404).json({ message: "Recipe not found." }); 
         }
         else {
             res.json(result.rows[0]);
@@ -340,8 +562,25 @@ app.get("/recipes/:recipeId", async (req, res) => {
 app.get("/recipes/:recipeId/recipeIngredients", async (req, res) => {
     const { recipeId } = req.params;
 
-    // TODO check if all inputs are defined and valid
-    // TODO check if recipe exists
+    // check if all parameters are defined and of correct type
+    if (!isDefined(recipeId) || isNaN(recipeId)) {
+        res.status(400).json({ message: "Must provide a valid recipeID." }); 
+        return;
+    }
+
+    // check if recipe exists
+    try {
+        const queryString = "SELECT * FROM recipe WHERE recipe_id=$1";
+
+        if (!await existsInDB(queryString, [recipeId])) {
+            res.status(404).json({ message: "Recipe not found." }); 
+            return;
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Server error." });
+        return;
+    }
 
     try {
         const result = await db.query(
@@ -364,7 +603,53 @@ app.get("/recipes/:recipeId/recipeIngredients", async (req, res) => {
 app.post("/recipes", async (req, res) => {
     const { recipe_name, creator_id, recipe_instructions } = req.body;
 
-    // TODO check if all inputs are defined and valid
+    // check if all parameters are defined and of correct type
+    if (!isDefined(recipe_name.creator_id, recipe_instructions) || isNaN(creator_id)) {
+        res.status(400).json({ message: "Must provide a valid recipe_name, creator_id and recipe_instructions." }); 
+        return;
+    }
+
+    // ----- recipe_name checks -----
+
+    // check if recipe_name is at least 3 characters and at most 100 characters long
+    if (recipe_name.length < 3 || recipe_name.length > 100) {
+        res.status(400).json({ message: "Recipe name must be at least 3 and at most 100 characters long." });
+        return;
+    }
+
+    // check if recipe_name only contains letters, numbers and the following symbols: ! "#$%&'()*+,-./:;<=>?@[\]^_{|}~
+    if (!/^[ -~]*$/.test(recipe_name)) {
+        res.status(400).json({ message: "Recipe name must only contain letters, numbers and the following symbols: ! \"#$%&'()*+,-./:;<=>?@[\\]^_{|}~" });
+        return;
+    }
+
+    // ----- recipe_instructions checks -----
+
+    // check if recipe_instructions is at most 2000 characters long
+    if (recipe_instructions.length > 2000) {
+        res.status(400).json({ message: "Recipe description must be at most 2000 characters long." });
+        return;
+    }
+
+    // check if recipe_instructions only contains letters, numbers and the following symbols: ! "#$%&'()*+,-./:;<=>?@[\]^_{|}~
+    if (!/^[ -~]*$/.test(recipe_instructions)) {
+        res.status(400).json({ message: "Recipe instructions must only contain letters, numbers and the following symbols: ! \"#$%&'()*+,-./:;<=>?@[\\]^_{|}~" });
+        return;
+    }
+
+    // check if user (creator) exists
+    try {
+        const queryString = "SELECT * FROM app_user WHERE user_id=$1";
+
+        if (!await existsInDB(queryString, [creator_id])) {
+            res.status(404).json({ message: "User not found." }); 
+            return;
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Server error." });
+        return;
+    }
 
     try {
         const result = await db.query(
@@ -385,19 +670,44 @@ app.post("/recipes/:recipeId/recipeIngredients", async (req, res) => {
     const { ingredient_id, amount, measurement } = req.body;
     const { recipeId } = req.params;
 
-    // TODO check if all inputs are defined and valid
-    // TODO check if ingredient exists
-    // TODO check if ingredient is not already in a recipe
+    // check if all parameters are defined and of correct type
+    if (!isDefined(ingredient_id, recipeId, amount, measurement)
+        || isNaN(ingredient_id)
+        || isNaN(recipeId)
+        || isNaN(amount)
+    ) {
+        res.status(400).json({ message: "Must provide a valid ingredient_id, recipeID, amount and measurement." }); 
+        return;
+    }
 
-    // check if recipe is public (cannot add ingredients to public recipes)
+    if (!/^[A-Za-z]*$/.test(measurement)) {
+        res.status(400).json({ message: "Measurement must only contain letters." }); 
+        return;
+    }
+
+    // check if ingredient exists
+    try {
+        const queryString = "SELECT * FROM ingredient WHERE ingredient_id=$1";
+
+        if (!await existsInDB(queryString, [ingredient_id])) {
+            res.status(404).json({ message: "Ingredient not found." }); 
+            return;
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Server error." });
+        return;
+    }
+
+    // check if recipe exists and is private (cannot add ingredients to public recipes)
     try {
         const result = await db.query(
             "SELECT * FROM recipe WHERE recipe_id=$1",
             [recipeId]
         );
 
-        if (result.rows.length === 0) {
-            res.status(404).json({ message: "Recipe not found." }); // not found
+        if (result.rowCount === 0) {
+            res.status(404).json({ message: "Recipe not found." }); 
             return;
         }
 
@@ -411,7 +721,20 @@ app.post("/recipes/:recipeId/recipeIngredients", async (req, res) => {
         return;
     }
 
-    // Add ingredient to recipe
+    // check if ingredient is not already in the recipe
+    try {
+        const queryString = "SELECT * FROM recipe_ingredient WHERE recipe_id=$1 AND ingredient_id=$2";
+
+        if (await existsInDB(queryString, [recipeId, ingredient_id])) {
+            res.status(400).json({ message: "Ingredient is already in the recipe." });
+            return;
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Server error." });
+        return;
+    }
+
     try {
         const result = await db.query(
             "INSERT INTO recipe_ingredient (recipe_id, ingredient_id, amount, measurement) VALUES ($1, $2, $3, $4)",
@@ -431,12 +754,45 @@ app.put("/recipes/:recipeId", async (req, res) => {
     const { creator_id, recipe_name, recipe_instructions, is_public } = req.body;
     const { recipeId } = req.params;
 
-    // TODO check if all inputs are defined and valid
-    if (recipe_name === undefined || creator_id === undefined || is_public === undefined || recipe_instructions === undefined) {
-        res.status(400).json({message: "Must provide recipe_name, creator_id and is_public"}); // bad request
+    // check if all inputs are defined and valid
+    if (!isDefined(creator_id, recipe_name, recipe_instructions, is_public)
+        || isNaN(creator_id)
+        || isNaN(recipeId)
+        || typeof (is_public) !== "boolean"
+    ) {
+        res.status(400).json({ message: "Must provide a valid recipeID, recipe_name, creator_id, is_public and recipe_instructions" }); 
         return;
     }
 
+    // ----- recipe_name checks -----
+
+    // check if recipe_name is at least 3 characters and at most 100 characters long
+    if (recipe_name.length < 3 || recipe_name.length > 100) {
+        res.status(400).json({ message: "Recipe name must be at least 3 and at most 100 characters long." });
+        return;
+    }
+
+    // check if recipe_name only contains letters, numbers and the following symbols: ! "#$%&'()*+,-./:;<=>?@[\]^_{|}~
+    if (!/^[ -~]*$/.test(recipe_name)) {
+        res.status(400).json({ message: "Recipe name must only contain letters, numbers and the following symbols: ! \"#$%&'()*+,-./:;<=>?@[\\]^_{|}~" });
+        return;
+    }
+
+    // ----- recipe_instructions checks -----
+
+    // check if recipe_instructions is at most 2000 characters long
+    if (recipe_instructions.length > 2000) {
+        res.status(400).json({ message: "Recipe description must be at most 2000 characters long." });
+        return;
+    }
+
+    // check if recipe_instructions only contains letters, numbers and the following symbols: ! "#$%&'()*+,-./:;<=>?@[\]^_{|}~
+    if (!/^[ -~]*$/.test(recipe_instructions)) {
+        res.status(400).json({ message: "Recipe instructions must only contain letters, numbers and the following symbols: ! \"#$%&'()*+,-./:;<=>?@[\\]^_{|}~" });
+        return;
+    }
+
+    // check if recipe exists
     // check if recipe is private (can't alter public recipe)
     // check if recipe creator_id is not being changed
     try {
@@ -445,8 +801,8 @@ app.put("/recipes/:recipeId", async (req, res) => {
             [recipeId]
         );
 
-        if (result.rows.length === 0) {
-            res.status(404).json({ message: "Recipe not found." }); // not found
+        if (result.rowCount === 0) {
+            res.status(404).json({ message: "Recipe not found." }); 
             return;
         }
 
@@ -487,18 +843,21 @@ app.put("/recipes/:recipeId", async (req, res) => {
 app.delete("/recipes/:recipeId", async (req, res) => {
     const { recipeId } = req.params;
 
-    // TODO check if all inputs are defined and valid
-    // TODO return 404 if requested item to delete doesn't exist
+    // check if all parameters are defined and of correct type
+    if (!isDefined(recipeId) || isNaN(recipeId)) {
+        res.status(400).json({ message: "Must provide a valid recipeID." }); 
+        return;
+    }
 
-    // check if recipe is public (cannot delete public recipes)
+    // check if recipe exists and is not public (cannot delete public recipes)
     try {
         const result = await db.query(
             "SELECT * FROM recipe WHERE recipe_id=$1",
             [recipeId]
         );
 
-        if (result.rows.length === 0) {
-            res.status(404).json({ message: "Recipe not found." }); // not found
+        if (result.rowCount === 0) {
+            res.status(404).json({ message: "Recipe not found." }); 
             return;
         }
 
@@ -529,23 +888,57 @@ app.delete("/recipeIngredients/:ingredientId", async (req, res) => {
     const { recipe_id } = req.body;
     const { ingredientId } = req.params;
 
-    // TODO check if all inputs are defined and valid
-    // TODO return 404 if requested item to delete doesn't exist
+    // check if all parameters are defined and of correct type
+    if (!isDefined(recipe_id, ingredientId)
+        || isNaN(recipe_id)
+        || isNaN(ingredientId)
+    ) {
+        res.status(400).json({ message: "Must provide a valid recipe_id and ingredientID." }); 
+        return;
+    }
 
-    // check if recipe is public (cannot delete ingredients from public recipes)
+    // check if recipe exists and is not public (cannot delete ingredients from public recipes)
     try {
         const result = await db.query(
             "SELECT * FROM recipe WHERE recipe_id=$1",
             [recipe_id]
         );
 
-        if (result.rows.length === 0) {
-            res.status(404).json({ message: "Recipe not found." }); // not found
+        if (result.rowCount === 0) {
+            res.status(404).json({ message: "Recipe not found." }); 
             return;
         }
 
         if (result.rows[0].is_public) {
             res.status(403).json({ message: "Cannot alter public recipes." }); // forbbiden
+            return;
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Server error." });
+        return;
+    }
+
+    // check if ingredient exists
+    try {
+        const queryString = "SELECT * FROM ingredient WHERE ingredient_id=$1";
+
+        if (!await existsInDB(queryString, [ingredientId])) {
+            res.status(404).json({ message: "Ingredient not found." }); 
+            return;
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Server error." });
+        return;
+    }
+
+    // check if ingredient is in the recipe
+    try {
+        const queryString = "SELECT * FROM recipe_ingredient WHERE recipe_id=$1 AND ingredient_id=$2";
+
+        if (!await existsInDB(queryString, [recipeId, ingredient_id])) {
+            res.status(404).json({ message: "Ingredient is not in the recipe." }); 
             return;
         }
     } catch (error) {
@@ -590,6 +983,11 @@ app.get("/ingredients", async (req, res) => {
 app.get("/ingredients/:ingredientId", async (req, res) => {
     const { ingredientId } = req.params;
 
+    if (!isDefined(ingredientId) || isNaN(ingredientId)) {
+        res.status(400).json({ message: "Must provide a valid ingredientID." }); 
+        return;
+    }
+
     try {
         const result = await db.query(
             `SELECT ingredient_id, ingredient_name
@@ -598,8 +996,8 @@ app.get("/ingredients/:ingredientId", async (req, res) => {
             [ingredientId]
         );
 
-        if (result.rows.length === 0) {
-            res.status(404).json({ message: "Ingredient not found." }); // not found
+        if (result.rowCount === 0) {
+            res.status(404).json({ message: "Ingredient not found." }); 
         }
         else {
             res.json(result.rows[0]);
@@ -616,7 +1014,25 @@ app.get("/ingredients/:ingredientId", async (req, res) => {
 app.post("/ingredients", async (req, res) => {
     const { ingredient_name } = req.body;
 
-    // TODO check if all inputs are defined and valid
+    if (!isDefined(ingredient_name)) {
+        res.status(400).json({ message: "Must provide a valid ingredient_name." }); 
+        return;
+    }
+
+    // check if ingredient with the same name already exists
+    try {
+        const queryString = "SELECT * FROM ingredient WHERE ingredient_name=$1";
+
+        if (await existsInDB(queryString, [ingredient_name])) {
+            res.status(400).json({ message: "Ingredient already exists." });
+            return;
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Server error." });
+        return;
+    }
+
     // TODO if ingredient passes profanity check aprove it for public
     const isApproved = false;
 
@@ -641,18 +1057,32 @@ app.delete("/ingredients/:ingredientId", async (req, res) => {
     const { ingredientId } = req.params;
 
     // TODO can only be deleted by an admin
-    // TODO check if ingredient is not used by any recipe
-    // TODO check if all inputs are defined and valid
+
+    if (!isDefined(ingredientId) || isNaN(ingredientId)) {
+        res.status(400).json({ message: "Must provide a valid ingredientID." });
+        return;
+    }
 
     // check if ingredient exists
     try {
-        const result = await db.query(
-            "SELECT * FROM ingredient WHERE ingredient_id=$1",
-            [ingredientId]
-        );
+        const queryString = "SELECT * FROM ingredient WHERE ingredient_id=$1";
 
-        if (result.rows.length === 0) {
-            res.status(404).json({ message: "Ingredient not found." }); // not found
+        if (!await existsInDB(queryString, [ingredientId])) {
+            res.status(404).json({ message: "Ingredient not found." });
+            return;
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Server error." });
+        return;
+    }
+
+    // check if ingredient is not used bv any recipe
+    try {
+        const queryString = "SELECT * FROM recipe_ingredient WHERE ingredient_id=$1";
+
+        if (await existsInDB(queryString, [ingredientId])) {
+            res.status(400).json({ message: "Ingredient is used by a recipe." });
             return;
         }
     } catch (error) {
