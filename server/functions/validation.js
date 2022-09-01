@@ -3,7 +3,7 @@ const db = require("../db");
 module.exports = {
     // checks if all items are defined and not null
     isDefined: (...items) => {
-        for (let item in items) {
+        for (let item of items) {
             if (item === null || item === undefined) {
                 return false;
             }

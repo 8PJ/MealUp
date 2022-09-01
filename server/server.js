@@ -13,6 +13,16 @@ require("./auth/sessionAuth")(app);
 // middleware
 app.use(express.json());
 
+// handle JSON.parse errors
+app.use((error, req, res, next) => {
+    if (error instanceof SyntaxError && error.status === 400) {
+        console.log(error);
+        res.status(400).json({ message: "Request may have a syntax error." });
+        return;
+    }
+    next();
+});
+
 // root route for testing (will later serve react app)
 app.get("/", async (req, res) => {
     try {
@@ -146,13 +156,13 @@ app.get("/users/:userId/followedRecipes", async (req, res) => {
     }
 });
 
-// Get all favourited ingredients by a user
-app.get("/users/:userId/favouriteIngredients", async (req, res) => {
+// Get all recipes that are used for a meal plan by a user
+app.get("/users/:userId/mealPlanRecipes", async (req, res) => {
     const { userId } = req.params;
 
-    // check if userId is defined and of the right type
+    // check if all parameters are defined and of the right type
     if (!isDefined(userId) || isNaN(userId)) {
-        res.status(400).json({ message: "Must provide a valid userID" }); 
+        res.status(400).json({ message: "Must provide a valid userID" });
         return;
     }
 
@@ -161,7 +171,46 @@ app.get("/users/:userId/favouriteIngredients", async (req, res) => {
         const queryString = "SELECT * FROM app_user WHERE user_id=$1";
 
         if (!await existsInDB(queryString, [userId])) {
-            res.status(404).json({ message: "User not found." }); 
+            res.status(404).json({ message: "User not found." });
+            return;
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Server error." });
+        return;
+    }
+
+    try {
+        const result = await db.query(
+            `SELECT recipe_id, creator_id, recipe_name, recipe_instructions, is_used_for_meal_plan, is_public
+             FROM followed_recipe INNER JOIN recipe 
+                USING(recipe_id)
+             WHERE user_id=$1 AND is_used_for_meal_plan=$2`,
+            [userId, true]
+        );
+        res.json(result.rows);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Server error." });
+    }
+});
+
+// Get all favourited ingredients by a user
+app.get("/users/:userId/favouriteIngredients", async (req, res) => {
+    const { userId } = req.params;
+
+    // check if all parameters are defined and of the right type
+    if (!isDefined(userId) || isNaN(userId)) {
+        res.status(400).json({ message: "Must provide a valid userID" });
+        return;
+    }
+
+    // check if user exists
+    try {
+        const queryString = "SELECT * FROM app_user WHERE user_id=$1";
+
+        if (!await existsInDB(queryString, [userId])) {
+            res.status(404).json({ message: "User not found." });
             return;
         }
     } catch (error) {
@@ -193,7 +242,7 @@ app.post("/users", async (req, res) => {
 
     // check if all parameters are defined 
     if (!isDefined(username, email, password)) {
-        res.status(400).json({ message: "Must provide a username, email and password" }); 
+        res.status(400).json({ message: "Must provide a username, email and password" });
         return;
     }
 
@@ -300,7 +349,7 @@ app.post("/users/:userId/followedRecipes", async (req, res) => {
         || isNaN(recipe_id)
         || typeof (is_used_for_meal_plan) !== "boolean"
     ) {
-        res.status(400).json({ message: "Must provide a valid userID, recipe_id and is_used_for_meal_plan." }); 
+        res.status(400).json({ message: "Must provide a valid userID, recipe_id and is_used_for_meal_plan." });
         return;
     }
 
@@ -309,7 +358,7 @@ app.post("/users/:userId/followedRecipes", async (req, res) => {
         const queryString = "SELECT * FROM app_user WHERE user_id=$1";
 
         if (!await existsInDB(queryString, [userId])) {
-            res.status(404).json({ message: "User not found." }); 
+            res.status(404).json({ message: "User not found." });
             return;
         }
     } catch (error) {
@@ -323,7 +372,7 @@ app.post("/users/:userId/followedRecipes", async (req, res) => {
         const queryString = "SELECT * FROM recipe WHERE recipe_id=$1";
 
         if (!await existsInDB(queryString, [recipe_id])) {
-            res.status(404).json({ message: "Recipe not found." }); 
+            res.status(404).json({ message: "Recipe not found." });
             return;
         }
     } catch (error) {
@@ -360,6 +409,80 @@ app.post("/users/:userId/followedRecipes", async (req, res) => {
 
 // PATCH
 
+// Add/Remove a recipe from user's meal plan recipes
+app.patch("/mealPlanRecipes/:recipeId", async (req, res) => {
+    const { user_id, is_used_for_meal_plan } = req.body;
+    const { recipeId } = req.params;
+
+    // check if all parameters are defined and of correct type
+    if (
+        !isDefined(user_id, recipeId, is_used_for_meal_plan)
+        || isNaN(user_id)
+        || isNaN(recipeId)
+        || typeof (is_used_for_meal_plan) !== "boolean"
+    ) {
+        res.status(400).json({ message: "Must provide a valid user_id, recipeID and is_used_for_meal_plan." });
+        return;
+    }
+
+    // check if user exists
+    try {
+        const queryString = "SELECT * FROM app_user WHERE user_id=$1";
+
+        if (!await existsInDB(queryString, [user_id])) {
+            res.status(404).json({ message: "User not found." });
+            return;
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Server error." });
+        return;
+    }
+
+    // check if recipe exists
+    try {
+        const queryString = "SELECT * FROM recipe WHERE recipe_id=$1";
+
+        if (!await existsInDB(queryString, [recipeId])) {
+            res.status(404).json({ message: "Recipe not found." });
+            return;
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Server error." });
+        return;
+    }
+
+    // check if user follows the recipe
+    try {
+        const result = await db.query(
+            "SELECT * FROM followed_recipe WHERE user_id=$1 AND recipe_id=$2",
+            [user_id, recipeId]
+        );
+
+        if (result.rowCount === 0) {
+            res.status(404).json({ message: "Cannot use a recipe for a meal plan that is not in the user's followed recipes" });
+            return;
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Server error." });
+        return;
+    }
+
+    try {
+        const result = await db.query(
+            "UPDATE followed_recipe SET is_used_for_meal_plan=$1 WHERE user_id=$2 AND recipe_id=$3",
+            [is_used_for_meal_plan, user_id, recipeId]
+        );
+        const change = is_used_for_meal_plan ? "added to" : "removed to not";
+        res.json({ message: `Recipe ${change} be used for a meal plan.` });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Server error." });
+    }
+});
+
 // Favourite/unfavourite an ingredient for a user
 app.patch("/favouriteIngredients/:ingredientId", async (req, res) => {
     const { user_id, is_favourite } = req.body;
@@ -372,7 +495,7 @@ app.patch("/favouriteIngredients/:ingredientId", async (req, res) => {
         || isNaN(ingredientId)
         || typeof (is_favourite) !== "boolean"
     ) {
-        res.status(400).json({ message: "Must provide a valid user_id, ingredientID and is_favourite." }); 
+        res.status(400).json({ message: "Must provide a valid user_id, ingredientID and is_favourite." });
         return;
     }
 
@@ -381,7 +504,7 @@ app.patch("/favouriteIngredients/:ingredientId", async (req, res) => {
         const queryString = "SELECT * FROM app_user WHERE user_id=$1";
 
         if (!await existsInDB(queryString, [user_id])) {
-            res.status(404).json({ message: "User not found." }); 
+            res.status(404).json({ message: "User not found." });
             return;
         }
     } catch (error) {
@@ -395,7 +518,7 @@ app.patch("/favouriteIngredients/:ingredientId", async (req, res) => {
         const queryString = "SELECT * FROM ingredient WHERE ingredient_id=$1";
 
         if (!await existsInDB(queryString, [ingredientId])) {
-            res.status(404).json({ message: "Ingredient not found." }); 
+            res.status(404).json({ message: "Ingredient not found." });
             return;
         }
     } catch (error) {
@@ -449,7 +572,7 @@ app.delete("/followedRecipes/:recipeId", async (req, res) => {
 
     // check if all parameters are defined and of correct type
     if (!isDefined(user_id, recipeId) || isNaN(user_id) || isNaN(recipeId)) {
-        res.status(400).json({ message: "Must provide a valid user_id and recipeID." }); 
+        res.status(400).json({ message: "Must provide a valid user_id and recipeID." });
         return;
     }
 
@@ -458,7 +581,7 @@ app.delete("/followedRecipes/:recipeId", async (req, res) => {
         const queryString = "SELECT * FROM app_user WHERE user_id=$1";
 
         if (!await existsInDB(queryString, [user_id])) {
-            res.status(404).json({ message: "User not found." }); 
+            res.status(404).json({ message: "User not found." });
             return;
         }
     } catch (error) {
@@ -472,7 +595,7 @@ app.delete("/followedRecipes/:recipeId", async (req, res) => {
         const queryString = "SELECT * FROM recipe WHERE recipe_id=$1";
 
         if (!await existsInDB(queryString, [recipeId])) {
-            res.status(404).json({ message: "Recipe not found." }); 
+            res.status(404).json({ message: "Recipe not found." });
             return;
         }
     } catch (error) {
@@ -535,7 +658,7 @@ app.get("/recipes/:recipeId", async (req, res) => {
 
     // check if all parameters are defined and of correct type
     if (!isDefined(recipeId) || isNaN(recipeId)) {
-        res.status(400).json({ message: "Must provide a valid recipeID." }); 
+        res.status(400).json({ message: "Must provide a valid recipeID." });
         return;
     }
 
@@ -547,7 +670,7 @@ app.get("/recipes/:recipeId", async (req, res) => {
         );
         console.log(result);
         if (result.rowCount === 0) {
-            res.status(404).json({ message: "Recipe not found." }); 
+            res.status(404).json({ message: "Recipe not found." });
         }
         else {
             res.json(result.rows[0]);
@@ -564,7 +687,7 @@ app.get("/recipes/:recipeId/recipeIngredients", async (req, res) => {
 
     // check if all parameters are defined and of correct type
     if (!isDefined(recipeId) || isNaN(recipeId)) {
-        res.status(400).json({ message: "Must provide a valid recipeID." }); 
+        res.status(400).json({ message: "Must provide a valid recipeID." });
         return;
     }
 
@@ -573,7 +696,7 @@ app.get("/recipes/:recipeId/recipeIngredients", async (req, res) => {
         const queryString = "SELECT * FROM recipe WHERE recipe_id=$1";
 
         if (!await existsInDB(queryString, [recipeId])) {
-            res.status(404).json({ message: "Recipe not found." }); 
+            res.status(404).json({ message: "Recipe not found." });
             return;
         }
     } catch (error) {
@@ -604,8 +727,8 @@ app.post("/recipes", async (req, res) => {
     const { recipe_name, creator_id, recipe_instructions } = req.body;
 
     // check if all parameters are defined and of correct type
-    if (!isDefined(recipe_name.creator_id, recipe_instructions) || isNaN(creator_id)) {
-        res.status(400).json({ message: "Must provide a valid recipe_name, creator_id and recipe_instructions." }); 
+    if (!isDefined(recipe_name, creator_id, recipe_instructions) || isNaN(creator_id)) {
+        res.status(400).json({ message: "Must provide a valid recipe_name, creator_id and recipe_instructions." });
         return;
     }
 
@@ -642,7 +765,7 @@ app.post("/recipes", async (req, res) => {
         const queryString = "SELECT * FROM app_user WHERE user_id=$1";
 
         if (!await existsInDB(queryString, [creator_id])) {
-            res.status(404).json({ message: "User not found." }); 
+            res.status(404).json({ message: "User not found." });
             return;
         }
     } catch (error) {
@@ -676,12 +799,12 @@ app.post("/recipes/:recipeId/recipeIngredients", async (req, res) => {
         || isNaN(recipeId)
         || isNaN(amount)
     ) {
-        res.status(400).json({ message: "Must provide a valid ingredient_id, recipeID, amount and measurement." }); 
+        res.status(400).json({ message: "Must provide a valid ingredient_id, recipeID, amount and measurement." });
         return;
     }
 
     if (!/^[A-Za-z]*$/.test(measurement)) {
-        res.status(400).json({ message: "Measurement must only contain letters." }); 
+        res.status(400).json({ message: "Measurement must only contain letters." });
         return;
     }
 
@@ -690,7 +813,7 @@ app.post("/recipes/:recipeId/recipeIngredients", async (req, res) => {
         const queryString = "SELECT * FROM ingredient WHERE ingredient_id=$1";
 
         if (!await existsInDB(queryString, [ingredient_id])) {
-            res.status(404).json({ message: "Ingredient not found." }); 
+            res.status(404).json({ message: "Ingredient not found." });
             return;
         }
     } catch (error) {
@@ -707,7 +830,7 @@ app.post("/recipes/:recipeId/recipeIngredients", async (req, res) => {
         );
 
         if (result.rowCount === 0) {
-            res.status(404).json({ message: "Recipe not found." }); 
+            res.status(404).json({ message: "Recipe not found." });
             return;
         }
 
@@ -760,7 +883,7 @@ app.put("/recipes/:recipeId", async (req, res) => {
         || isNaN(recipeId)
         || typeof (is_public) !== "boolean"
     ) {
-        res.status(400).json({ message: "Must provide a valid recipeID, recipe_name, creator_id, is_public and recipe_instructions" }); 
+        res.status(400).json({ message: "Must provide a valid recipeID, recipe_name, creator_id, is_public and recipe_instructions" });
         return;
     }
 
@@ -802,7 +925,7 @@ app.put("/recipes/:recipeId", async (req, res) => {
         );
 
         if (result.rowCount === 0) {
-            res.status(404).json({ message: "Recipe not found." }); 
+            res.status(404).json({ message: "Recipe not found." });
             return;
         }
 
@@ -845,7 +968,7 @@ app.delete("/recipes/:recipeId", async (req, res) => {
 
     // check if all parameters are defined and of correct type
     if (!isDefined(recipeId) || isNaN(recipeId)) {
-        res.status(400).json({ message: "Must provide a valid recipeID." }); 
+        res.status(400).json({ message: "Must provide a valid recipeID." });
         return;
     }
 
@@ -857,7 +980,7 @@ app.delete("/recipes/:recipeId", async (req, res) => {
         );
 
         if (result.rowCount === 0) {
-            res.status(404).json({ message: "Recipe not found." }); 
+            res.status(404).json({ message: "Recipe not found." });
             return;
         }
 
@@ -893,7 +1016,7 @@ app.delete("/recipeIngredients/:ingredientId", async (req, res) => {
         || isNaN(recipe_id)
         || isNaN(ingredientId)
     ) {
-        res.status(400).json({ message: "Must provide a valid recipe_id and ingredientID." }); 
+        res.status(400).json({ message: "Must provide a valid recipe_id and ingredientID." });
         return;
     }
 
@@ -905,7 +1028,7 @@ app.delete("/recipeIngredients/:ingredientId", async (req, res) => {
         );
 
         if (result.rowCount === 0) {
-            res.status(404).json({ message: "Recipe not found." }); 
+            res.status(404).json({ message: "Recipe not found." });
             return;
         }
 
@@ -924,7 +1047,7 @@ app.delete("/recipeIngredients/:ingredientId", async (req, res) => {
         const queryString = "SELECT * FROM ingredient WHERE ingredient_id=$1";
 
         if (!await existsInDB(queryString, [ingredientId])) {
-            res.status(404).json({ message: "Ingredient not found." }); 
+            res.status(404).json({ message: "Ingredient not found." });
             return;
         }
     } catch (error) {
@@ -937,8 +1060,8 @@ app.delete("/recipeIngredients/:ingredientId", async (req, res) => {
     try {
         const queryString = "SELECT * FROM recipe_ingredient WHERE recipe_id=$1 AND ingredient_id=$2";
 
-        if (!await existsInDB(queryString, [recipeId, ingredient_id])) {
-            res.status(404).json({ message: "Ingredient is not in the recipe." }); 
+        if (!await existsInDB(queryString, [recipe_id, ingredientId])) {
+            res.status(404).json({ message: "Ingredient is not in the recipe." });
             return;
         }
     } catch (error) {
@@ -984,7 +1107,7 @@ app.get("/ingredients/:ingredientId", async (req, res) => {
     const { ingredientId } = req.params;
 
     if (!isDefined(ingredientId) || isNaN(ingredientId)) {
-        res.status(400).json({ message: "Must provide a valid ingredientID." }); 
+        res.status(400).json({ message: "Must provide a valid ingredientID." });
         return;
     }
 
@@ -997,7 +1120,7 @@ app.get("/ingredients/:ingredientId", async (req, res) => {
         );
 
         if (result.rowCount === 0) {
-            res.status(404).json({ message: "Ingredient not found." }); 
+            res.status(404).json({ message: "Ingredient not found." });
         }
         else {
             res.json(result.rows[0]);
@@ -1015,7 +1138,19 @@ app.post("/ingredients", async (req, res) => {
     const { ingredient_name } = req.body;
 
     if (!isDefined(ingredient_name)) {
-        res.status(400).json({ message: "Must provide a valid ingredient_name." }); 
+        res.status(400).json({ message: "Must provide a valid ingredient_name." });
+        return;
+    }
+
+    // check if ingredient_name has at least 2 and at most 35 characters
+    if (ingredient_name.length < 2 || ingredient_name.length > 35) {
+        res.status(400).json({ message: "Ingredient name must be at least 2 and at most 35 characters long." });
+        return;
+    }
+
+    // check if ingredient_name only contains letters
+    if (!/^[A-Za-z0-9]*$/.test(ingredient_name)) {
+        res.status(400).json({ message: "Ingredient name must only contain letters and numbers" });
         return;
     }
 
@@ -1096,7 +1231,7 @@ app.delete("/ingredients/:ingredientId", async (req, res) => {
             "DELETE FROM ingredient WHERE ingredient_id=$1",
             [ingredientId]
         );
-        res.status(200).json({ message: "Ingredient successfullt deleted." }); // no content
+        res.status(200).json({ message: "Ingredient successfullt deleted." });
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Server error." });
