@@ -5,7 +5,8 @@ const db = require("./db");
 
 const passport = require("./authSetup/passportAuth");
 const { isDefined, existsInDB } = require("./functions/validation");
-const { checkAuthenticated } = require("./functions/auth");
+const { checkAuthenticated, checkAdmin } = require("./functions/auth");
+const { handleReqestSyntaxError } = require("./functions/middleware");
 
 const app = express();
 
@@ -15,14 +16,7 @@ require("./authSetup/sessionAuth")(app);
 app.use(express.json());
 
 // handle JSON.parse errors
-app.use((error, req, res, next) => {
-    if (error instanceof SyntaxError && error.status === 400) {
-        console.log(error);
-        res.status(400).json({ message: "Request may have a syntax error." });
-        return;
-    }
-    return next();
-});
+app.use(handleReqestSyntaxError);
 
 // root route for testing (will later serve react app)
 app.get("/", async (req, res) => {
@@ -45,7 +39,6 @@ app.get("/", async (req, res) => {
 
 // Log in user
 app.post("/login", async (req, res, next) => {
-    
     if (req.isAuthenticated()) {
         res.json({ message: "You are already logged in." });
         return;
@@ -74,20 +67,28 @@ app.post("/login", async (req, res, next) => {
     })(req, res, next);
 });
 
+// TODO create log out
+
 ///////////////
 // user APIs //
 ///////////////
 
-// TODO add all user API endpoints
+// TODO add all user API endpoints (create meal plan, etc.)
 
 // GET
 
 // Get all recipes created by a user
-app.get("/api/v1/users/:userId/createdRecipes", async (req, res) => {
-    const { userId } = req.params;
+app.get("/api/v1/users/:userID/createdRecipes", checkAuthenticated, async (req, res) => {
+    const { userID } = req.params;
 
-    // check if userId is defined and of the right type
-    if (!isDefined(userId) || isNaN(userId)) {
+    // check if logged in user is authorised (has correct ID or is an admin)
+    if (req.user.userID !== userID.toString() && !req.user.isAdmin) {
+        res.status(403).json({ message: "Unauthorised" });
+        return;
+    }
+
+    // check if userID is defined and of the right type
+    if (!isDefined(userID) || isNaN(userID)) {
         res.status(400).json({ message: "Must provide a valid userID" });
         return;
     }
@@ -96,7 +97,7 @@ app.get("/api/v1/users/:userId/createdRecipes", async (req, res) => {
     try {
         const queryString = "SELECT * FROM app_user WHERE user_id=$1";
 
-        if (!await existsInDB(queryString, [userId])) {
+        if (!await existsInDB(queryString, [userID])) {
             res.status(404).json({ message: "User not found." });
             return;
         }
@@ -110,7 +111,7 @@ app.get("/api/v1/users/:userId/createdRecipes", async (req, res) => {
         const result = await db.query(
             `SELECT recipe_id, creator_id, recipe_name, recipe_instructions, is_public
              FROM recipe WHERE creator_id=$1`,
-            [userId]
+            [userID]
         );
         res.json(result.rows);
     } catch (error) {
@@ -120,11 +121,17 @@ app.get("/api/v1/users/:userId/createdRecipes", async (req, res) => {
 });
 
 // Get all recipes followed by a user
-app.get("/api/v1/users/:userId/followedRecipes", async (req, res) => {
-    const { userId } = req.params;
+app.get("/api/v1/users/:userID/followedRecipes", checkAuthenticated, async (req, res) => {
+    const { userID } = req.params;
 
-    // check if userId is defined and of the right type
-    if (!isDefined(userId) || isNaN(userId)) {
+    // check if logged in user is authorised (has correct ID or is an admin)
+    if (req.user.userID !== userID.toString() && !req.user.isAdmin) {
+        res.status(403).json({ message: "Unauthorised" });
+        return;
+    }
+
+    // check if userID is defined and of the right type
+    if (!isDefined(userID) || isNaN(userID)) {
         res.status(400).json({ message: "Must provide a valid userID" });
         return;
     }
@@ -133,7 +140,7 @@ app.get("/api/v1/users/:userId/followedRecipes", async (req, res) => {
     try {
         const queryString = "SELECT * FROM app_user WHERE user_id=$1";
 
-        if (!await existsInDB(queryString, [userId])) {
+        if (!await existsInDB(queryString, [userID])) {
             res.status(404).json({ message: "User not found." });
             return;
         }
@@ -149,7 +156,7 @@ app.get("/api/v1/users/:userId/followedRecipes", async (req, res) => {
              FROM followed_recipe INNER JOIN recipe 
                 USING(recipe_id)
              WHERE user_id=$1`,
-            [userId]
+            [userID]
         );
         res.json(result.rows);
     } catch (error) {
@@ -159,11 +166,17 @@ app.get("/api/v1/users/:userId/followedRecipes", async (req, res) => {
 });
 
 // Get all recipes that are used for a meal plan by a user
-app.get("/api/v1/users/:userId/mealPlanRecipes", async (req, res) => {
-    const { userId } = req.params;
+app.get("/api/v1/users/:userID/mealPlanRecipes", checkAuthenticated, async (req, res) => {
+    const { userID } = req.params;
+
+    // check if logged in user is authorised (has correct ID or is an admin)
+    if (req.user.userID !== userID.toString() && !req.user.isAdmin) {
+        res.status(403).json({ message: "Unauthorised" });
+        return;
+    }
 
     // check if all parameters are defined and of the right type
-    if (!isDefined(userId) || isNaN(userId)) {
+    if (!isDefined(userID) || isNaN(userID)) {
         res.status(400).json({ message: "Must provide a valid userID" });
         return;
     }
@@ -172,7 +185,7 @@ app.get("/api/v1/users/:userId/mealPlanRecipes", async (req, res) => {
     try {
         const queryString = "SELECT * FROM app_user WHERE user_id=$1";
 
-        if (!await existsInDB(queryString, [userId])) {
+        if (!await existsInDB(queryString, [userID])) {
             res.status(404).json({ message: "User not found." });
             return;
         }
@@ -188,7 +201,7 @@ app.get("/api/v1/users/:userId/mealPlanRecipes", async (req, res) => {
              FROM followed_recipe INNER JOIN recipe 
                 USING(recipe_id)
              WHERE user_id=$1 AND is_used_for_meal_plan=$2`,
-            [userId, true]
+            [userID, true]
         );
         res.json(result.rows);
     } catch (error) {
@@ -198,11 +211,17 @@ app.get("/api/v1/users/:userId/mealPlanRecipes", async (req, res) => {
 });
 
 // Get all favourited ingredients by a user
-app.get("/api/v1/users/:userId/favouriteIngredients", async (req, res) => {
-    const { userId } = req.params;
+app.get("/api/v1/users/:userID/favouriteIngredients", checkAuthenticated, async (req, res) => {
+    const { userID } = req.params;
+
+    // check if logged in user is authorised (has correct ID or is an admin)
+    if (req.user.userID !== userID.toString() && !req.user.isAdmin) {
+        res.status(403).json({ message: "Unauthorised" });
+        return;
+    }
 
     // check if all parameters are defined and of the right type
-    if (!isDefined(userId) || isNaN(userId)) {
+    if (!isDefined(userID) || isNaN(userID)) {
         res.status(400).json({ message: "Must provide a valid userID" });
         return;
     }
@@ -211,7 +230,7 @@ app.get("/api/v1/users/:userId/favouriteIngredients", async (req, res) => {
     try {
         const queryString = "SELECT * FROM app_user WHERE user_id=$1";
 
-        if (!await existsInDB(queryString, [userId])) {
+        if (!await existsInDB(queryString, [userID])) {
             res.status(404).json({ message: "User not found." });
             return;
         }
@@ -227,7 +246,7 @@ app.get("/api/v1/users/:userId/favouriteIngredients", async (req, res) => {
              FROM user_ingredient_score INNER JOIN ingredient 
                 USING(ingredient_id)
              WHERE user_id=$1 AND is_favourite=$2`,
-            [userId, true]
+            [userID, true]
         );
         res.json(result.rows);
     } catch (error) {
@@ -292,7 +311,7 @@ app.post("/api/v1/users", async (req, res) => {
     try {
         const queryString = "SELECT * FROM app_user WHERE username=$1";
 
-        if (!await existsInDB(queryString, [username])) {
+        if (await existsInDB(queryString, [username])) {
             res.status(400).json({ message: "Username already used." });
             return;
         }
@@ -306,7 +325,7 @@ app.post("/api/v1/users", async (req, res) => {
     try {
         const queryString = "SELECT * FROM app_user WHERE email=$1";
 
-        if (!await existsInDB(queryString, [email])) {
+        if (await existsInDB(queryString, [email])) {
             res.status(400).json({ message: "Email already used." });
             return;
         }
@@ -340,14 +359,20 @@ app.post("/api/v1/users", async (req, res) => {
 });
 
 // Add a recipe to user's followed recipes
-app.post("/api/v1/users/:userId/followedRecipes", async (req, res) => {
+app.post("/api/v1/users/:userID/followedRecipes", checkAuthenticated, async (req, res) => {
     const { recipe_id, is_used_for_meal_plan } = req.body;
-    const { userId } = req.params;
+    const { userID } = req.params;
+
+    // check if logged in user is authorised (has correct ID or is an admin)
+    if (req.user.userID !== userID.toString() && !req.user.isAdmin) {
+        res.status(403).json({ message: "Unauthorised" });
+        return;
+    }
 
     // check if all parameters are defined and of correct type
     if (
-        !isDefined(userId, recipe_id, is_used_for_meal_plan)
-        || isNaN(userId)
+        !isDefined(userID, recipe_id, is_used_for_meal_plan)
+        || isNaN(userID)
         || isNaN(recipe_id)
         || typeof (is_used_for_meal_plan) !== "boolean"
     ) {
@@ -359,7 +384,7 @@ app.post("/api/v1/users/:userId/followedRecipes", async (req, res) => {
     try {
         const queryString = "SELECT * FROM app_user WHERE user_id=$1";
 
-        if (!await existsInDB(queryString, [userId])) {
+        if (!await existsInDB(queryString, [userID])) {
             res.status(404).json({ message: "User not found." });
             return;
         }
@@ -387,7 +412,7 @@ app.post("/api/v1/users/:userId/followedRecipes", async (req, res) => {
     try {
         const queryString = "SELECT * FROM followed_recipe WHERE user_id=$1 AND recipe_id=$2";
 
-        if (await existsInDB(queryString, [userId, recipe_id])) {
+        if (await existsInDB(queryString, [userID, recipe_id])) {
             res.status(400).json({ message: "Recipe already followed." });
             return;
         }
@@ -400,7 +425,7 @@ app.post("/api/v1/users/:userId/followedRecipes", async (req, res) => {
     try {
         const result = await db.query(
             "INSERT INTO followed_recipe (user_id, recipe_id, is_used_for_meal_plan) VALUES ($1, $2, $3)",
-            [userId, recipe_id, is_used_for_meal_plan]
+            [userID, recipe_id, is_used_for_meal_plan]
         );
         res.json({ message: "Recipe successfully followed." });
     } catch (error) {
@@ -412,15 +437,21 @@ app.post("/api/v1/users/:userId/followedRecipes", async (req, res) => {
 // PATCH
 
 // Add/Remove a recipe from user's meal plan recipes
-app.patch("/api/v1/mealPlanRecipes/:recipeId", async (req, res) => {
+app.patch("/api/v1/mealPlanRecipes/:recipeID", checkAuthenticated, async (req, res) => {
     const { user_id, is_used_for_meal_plan } = req.body;
-    const { recipeId } = req.params;
+    const { recipeID } = req.params;
+
+    // check if logged in user is authorised (has correct ID or is an admin)
+    if (req.user.userID !== user_id.toString() && !req.user.isAdmin) {
+        res.status(403).json({ message: "Unauthorised" });
+        return;
+    }
 
     // check if all parameters are defined and of correct type
     if (
-        !isDefined(user_id, recipeId, is_used_for_meal_plan)
+        !isDefined(user_id, recipeID, is_used_for_meal_plan)
         || isNaN(user_id)
-        || isNaN(recipeId)
+        || isNaN(recipeID)
         || typeof (is_used_for_meal_plan) !== "boolean"
     ) {
         res.status(400).json({ message: "Must provide a valid user_id, recipeID and is_used_for_meal_plan." });
@@ -445,7 +476,7 @@ app.patch("/api/v1/mealPlanRecipes/:recipeId", async (req, res) => {
     try {
         const queryString = "SELECT * FROM recipe WHERE recipe_id=$1";
 
-        if (!await existsInDB(queryString, [recipeId])) {
+        if (!await existsInDB(queryString, [recipeID])) {
             res.status(404).json({ message: "Recipe not found." });
             return;
         }
@@ -459,7 +490,7 @@ app.patch("/api/v1/mealPlanRecipes/:recipeId", async (req, res) => {
     try {
         const result = await db.query(
             "SELECT * FROM followed_recipe WHERE user_id=$1 AND recipe_id=$2",
-            [user_id, recipeId]
+            [user_id, recipeID]
         );
 
         if (result.rowCount === 0) {
@@ -475,7 +506,7 @@ app.patch("/api/v1/mealPlanRecipes/:recipeId", async (req, res) => {
     try {
         const result = await db.query(
             "UPDATE followed_recipe SET is_used_for_meal_plan=$1 WHERE user_id=$2 AND recipe_id=$3",
-            [is_used_for_meal_plan, user_id, recipeId]
+            [is_used_for_meal_plan, user_id, recipeID]
         );
         const change = is_used_for_meal_plan ? "added to" : "removed to not";
         res.json({ message: `Recipe ${change} be used for a meal plan.` });
@@ -486,15 +517,21 @@ app.patch("/api/v1/mealPlanRecipes/:recipeId", async (req, res) => {
 });
 
 // Favourite/unfavourite an ingredient for a user
-app.patch("/api/v1/favouriteIngredients/:ingredientId", async (req, res) => {
+app.patch("/api/v1/favouriteIngredients/:ingredientID", checkAuthenticated, async (req, res) => {
     const { user_id, is_favourite } = req.body;
-    const { ingredientId } = req.params;
+    const { ingredientID } = req.params;
+
+    // check if logged in user is authorised (has correct ID or is an admin)
+    if (req.user.userID !== user_id.toString() && !req.user.isAdmin) {
+        res.status(403).json({ message: "Unauthorised" });
+        return;
+    }
 
     // check if all parameters are defined and of correct type
     if (
-        !isDefined(user_id, ingredientId, is_favourite)
+        !isDefined(user_id, ingredientID, is_favourite)
         || isNaN(user_id)
-        || isNaN(ingredientId)
+        || isNaN(ingredientID)
         || typeof (is_favourite) !== "boolean"
     ) {
         res.status(400).json({ message: "Must provide a valid user_id, ingredientID and is_favourite." });
@@ -519,7 +556,7 @@ app.patch("/api/v1/favouriteIngredients/:ingredientId", async (req, res) => {
     try {
         const queryString = "SELECT * FROM ingredient WHERE ingredient_id=$1";
 
-        if (!await existsInDB(queryString, [ingredientId])) {
+        if (!await existsInDB(queryString, [ingredientID])) {
             res.status(404).json({ message: "Ingredient not found." });
             return;
         }
@@ -533,14 +570,14 @@ app.patch("/api/v1/favouriteIngredients/:ingredientId", async (req, res) => {
     try {
         const result = await db.query(
             "SELECT * FROM user_ingredient_score WHERE user_id=$1 AND ingredient_id=$2",
-            [user_id, ingredientId]
+            [user_id, ingredientID]
         );
 
         if (result.rowCount === 0) {
             const resultInsert = await db.query(
                 `INSERT INTO user_ingredient_score (user_id, ingredient_id, is_favourite, score)
                  VALUES($1, $2, $3, DEFAULT)`,
-                [user_id, ingredientId, is_favourite]
+                [user_id, ingredientID, is_favourite]
             );
             const change = is_favourite ? "favourited" : "unfavourited";
             res.json({ message: `Ingredient successfully ${change}.` });
@@ -555,7 +592,7 @@ app.patch("/api/v1/favouriteIngredients/:ingredientId", async (req, res) => {
     try {
         const result = await db.query(
             "UPDATE user_ingredient_score SET is_favourite=$1 WHERE user_id=$2 AND ingredient_id=$3",
-            [is_favourite, user_id, ingredientId]
+            [is_favourite, user_id, ingredientID]
         );
         const change = is_favourite ? "favourited" : "unfavourited";
         res.json({ message: `Ingredient successfully ${change}.` });
@@ -568,12 +605,18 @@ app.patch("/api/v1/favouriteIngredients/:ingredientId", async (req, res) => {
 // DELETE
 
 // Delete a recipe from user's followed recipes
-app.delete("/api/v1/followedRecipes/:recipeId", async (req, res) => {
+app.delete("/api/v1/followedRecipes/:recipeID", checkAuthenticated, async (req, res) => {
     const { user_id } = req.body;
-    const { recipeId } = req.params;
+    const { recipeID } = req.params;
+
+    // check if logged in user is authorised (has correct ID or is an admin)
+    if (req.user.userID !== user_id.toString() && !req.user.isAdmin) {
+        res.status(403).json({ message: "Unauthorised" });
+        return;
+    }
 
     // check if all parameters are defined and of correct type
-    if (!isDefined(user_id, recipeId) || isNaN(user_id) || isNaN(recipeId)) {
+    if (!isDefined(user_id, recipeID) || isNaN(user_id) || isNaN(recipeID)) {
         res.status(400).json({ message: "Must provide a valid user_id and recipeID." });
         return;
     }
@@ -596,7 +639,7 @@ app.delete("/api/v1/followedRecipes/:recipeId", async (req, res) => {
     try {
         const queryString = "SELECT * FROM recipe WHERE recipe_id=$1";
 
-        if (!await existsInDB(queryString, [recipeId])) {
+        if (!await existsInDB(queryString, [recipeID])) {
             res.status(404).json({ message: "Recipe not found." });
             return;
         }
@@ -610,7 +653,7 @@ app.delete("/api/v1/followedRecipes/:recipeId", async (req, res) => {
     try {
         const queryString = "SELECT * FROM followed_recipe WHERE user_id=$1 AND recipe_id=$2";
 
-        if (!await existsInDB(queryString, [user_id, recipeId])) {
+        if (!await existsInDB(queryString, [user_id, recipeID])) {
             res.status(404).json({ message: "User doesn't follow this recipe." });
             return;
         }
@@ -623,7 +666,7 @@ app.delete("/api/v1/followedRecipes/:recipeId", async (req, res) => {
     try {
         const result = await db.query(
             "DELETE FROM followed_recipe WHERE user_id=$1 AND recipe_id=$2",
-            [user_id, recipeId]
+            [user_id, recipeID]
         );
         res.json({ message: "Recipe successfully unfollowed." });
     } catch (error) {
@@ -636,18 +679,28 @@ app.delete("/api/v1/followedRecipes/:recipeId", async (req, res) => {
 // recipe APIs //
 /////////////////
 
-// TODO write API to add and remove recipes from being used for a meal plan
-
 // GET
 
 // Get all recipes
-app.get("/api/v1/recipes", async (req, res) => {
+app.get("/api/v1/recipes", checkAuthenticated, async (req, res) => {
+    // return all recipes for an admin or public (and self created) for a regular user
     try {
-        const result = await db.query(
-            `SELECT recipe_id, creator_id, recipe_name, recipe_instructions, is_public 
-             FROM recipe`
-        );
-        res.json(result.rows);
+        if (req.user.isAdmin) {
+            const result = await db.query(
+                `SELECT recipe_id, creator_id, recipe_name, recipe_instructions, is_public 
+                 FROM recipe`
+            );
+            res.json(result.rows);
+        }
+        else {
+            const result = await db.query(
+                `SELECT recipe_id, creator_id, recipe_name, recipe_instructions, is_public 
+                 FROM recipe
+                 WHERE creator_id=$1 OR is_public=$2`,
+                [req.user.userID, true]
+            );
+            res.json(result.rows);
+        }
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Server error." });
@@ -655,11 +708,12 @@ app.get("/api/v1/recipes", async (req, res) => {
 });
 
 // Get specific recipe by id
-app.get("/api/v1/recipes/:recipeId", async (req, res) => {
-    const { recipeId } = req.params;
+app.get("/api/v1/recipes/:recipeID", checkAuthenticated, async (req, res) => {
+    // TODO check if specific user or admin or recipe public
+    const { recipeID } = req.params;
 
     // check if all parameters are defined and of correct type
-    if (!isDefined(recipeId) || isNaN(recipeId)) {
+    if (!isDefined(recipeID) || isNaN(recipeID)) {
         res.status(400).json({ message: "Must provide a valid recipeID." });
         return;
     }
@@ -668,15 +722,22 @@ app.get("/api/v1/recipes/:recipeId", async (req, res) => {
         const result = await db.query(
             `SELECT recipe_id, creator_id, recipe_name, recipe_instructions, is_public
              FROM recipe WHERE recipe_id=$1`,
-            [recipeId]
+            [recipeID]
         );
-        console.log(result);
+
         if (result.rowCount === 0) {
             res.status(404).json({ message: "Recipe not found." });
+            return;
         }
-        else {
-            res.json(result.rows[0]);
+
+        if (!result.rows[0].is_public) {
+            // check if logged in user is authorised (has correct ID or is an admin)
+            if (req.user.userID !== result.rows[0].creator_id.toString() && !req.user.isAdmin) {
+                res.status(403).json({ message: "Unauthorised" });
+                return;
+            }
         }
+        res.json(result.rows[0]);
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Server error." });
@@ -684,22 +745,34 @@ app.get("/api/v1/recipes/:recipeId", async (req, res) => {
 });
 
 // Get all ingredients of a specified recipe
-app.get("/api/v1/recipes/:recipeId/recipeIngredients", async (req, res) => {
-    const { recipeId } = req.params;
+app.get("/api/v1/recipes/:recipeID/recipeIngredients", checkAuthenticated, async (req, res) => {
+    // TODO check if specific user or admin or recipe public
+    const { recipeID } = req.params;
 
     // check if all parameters are defined and of correct type
-    if (!isDefined(recipeId) || isNaN(recipeId)) {
+    if (!isDefined(recipeID) || isNaN(recipeID)) {
         res.status(400).json({ message: "Must provide a valid recipeID." });
         return;
     }
 
-    // check if recipe exists
+    // check if recipe exists and user is authorised to access it
     try {
-        const queryString = "SELECT * FROM recipe WHERE recipe_id=$1";
+        const result = await db.query(
+            "SELECT * FROM recipe WHERE recipe_id=$1",
+            [recipeID]
+        );
 
-        if (!await existsInDB(queryString, [recipeId])) {
+        if (result.rowCount === 0) {
             res.status(404).json({ message: "Recipe not found." });
             return;
+        }
+
+        if (!result.rows[0].is_public) {
+            // check if logged in user is authorised (has correct ID or is an admin)
+            if (req.user.userID !== result.rows[0].creator_id.toString() && !req.user.isAdmin) {
+                res.status(403).json({ message: "Unauthorised" });
+                return;
+            }
         }
     } catch (error) {
         console.log(error);
@@ -713,7 +786,7 @@ app.get("/api/v1/recipes/:recipeId/recipeIngredients", async (req, res) => {
              FROM recipe_ingredient INNER JOIN ingredient
                 USING (ingredient_id)
              WHERE recipe_id=$1`,
-            [recipeId]
+            [recipeID]
         );
         res.json(result.rows);
     } catch (error) {
@@ -725,7 +798,7 @@ app.get("/api/v1/recipes/:recipeId/recipeIngredients", async (req, res) => {
 // POST
 
 // Create a new recipe
-app.post("/api/v1/recipes", async (req, res) => {
+app.post("/api/v1/recipes", checkAuthenticated, async (req, res) => {
     const { recipe_name, creator_id, recipe_instructions } = req.body;
 
     // check if all parameters are defined and of correct type
@@ -791,14 +864,14 @@ app.post("/api/v1/recipes", async (req, res) => {
 });
 
 // Add ingredient to recipe
-app.post("/api/v1/recipes/:recipeId/recipeIngredients", async (req, res) => {
+app.post("/api/v1/recipes/:recipeID/recipeIngredients", checkAuthenticated, async (req, res) => {
     const { ingredient_id, amount, measurement } = req.body;
-    const { recipeId } = req.params;
+    const { recipeID } = req.params;
 
     // check if all parameters are defined and of correct type
-    if (!isDefined(ingredient_id, recipeId, amount, measurement)
+    if (!isDefined(ingredient_id, recipeID, amount, measurement)
         || isNaN(ingredient_id)
-        || isNaN(recipeId)
+        || isNaN(recipeID)
         || isNaN(amount)
     ) {
         res.status(400).json({ message: "Must provide a valid ingredient_id, recipeID, amount and measurement." });
@@ -828,7 +901,7 @@ app.post("/api/v1/recipes/:recipeId/recipeIngredients", async (req, res) => {
     try {
         const result = await db.query(
             "SELECT * FROM recipe WHERE recipe_id=$1",
-            [recipeId]
+            [recipeID]
         );
 
         if (result.rowCount === 0) {
@@ -836,7 +909,14 @@ app.post("/api/v1/recipes/:recipeId/recipeIngredients", async (req, res) => {
             return;
         }
 
-        if (result.rows[0].is_public) {
+        if (!result.rows[0].is_public) {
+            // check if logged in user is authorised (has correct ID or is an admin)
+            if (req.user.userID !== result.rows[0].creator_id.toString() && !req.user.isAdmin) {
+                res.status(403).json({ message: "Unauthorised" });
+                return;
+            }
+        }
+        else {
             res.status(403).json({ message: "Cannot add ingredients to public recipes." });
             return;
         }
@@ -850,7 +930,7 @@ app.post("/api/v1/recipes/:recipeId/recipeIngredients", async (req, res) => {
     try {
         const queryString = "SELECT * FROM recipe_ingredient WHERE recipe_id=$1 AND ingredient_id=$2";
 
-        if (await existsInDB(queryString, [recipeId, ingredient_id])) {
+        if (await existsInDB(queryString, [recipeID, ingredient_id])) {
             res.status(400).json({ message: "Ingredient is already in the recipe." });
             return;
         }
@@ -863,7 +943,7 @@ app.post("/api/v1/recipes/:recipeId/recipeIngredients", async (req, res) => {
     try {
         const result = await db.query(
             "INSERT INTO recipe_ingredient (recipe_id, ingredient_id, amount, measurement) VALUES ($1, $2, $3, $4)",
-            [recipeId, ingredient_id, amount, measurement]
+            [recipeID, ingredient_id, amount, measurement]
         );
         res.json({ message: "Ingredient successfully added to the recipe." });
     } catch (error) {
@@ -875,14 +955,15 @@ app.post("/api/v1/recipes/:recipeId/recipeIngredients", async (req, res) => {
 // PUT
 
 // Make recipe public, change its name or instructions (reject all other changes)
-app.put("/api/v1/recipes/:recipeId", async (req, res) => {
+app.put("/api/v1/recipes/:recipeID", checkAuthenticated, async (req, res) => {
+    // TODO check if specific user or admin
     const { creator_id, recipe_name, recipe_instructions, is_public } = req.body;
-    const { recipeId } = req.params;
+    const { recipeID } = req.params;
 
     // check if all inputs are defined and valid
     if (!isDefined(creator_id, recipe_name, recipe_instructions, is_public)
         || isNaN(creator_id)
-        || isNaN(recipeId)
+        || isNaN(recipeID)
         || typeof (is_public) !== "boolean"
     ) {
         res.status(400).json({ message: "Must provide a valid recipeID, recipe_name, creator_id, is_public and recipe_instructions" });
@@ -923,11 +1004,17 @@ app.put("/api/v1/recipes/:recipeId", async (req, res) => {
     try {
         const result = await db.query(
             "SELECT * FROM recipe WHERE recipe_id=$1",
-            [recipeId]
+            [recipeID]
         );
 
         if (result.rowCount === 0) {
             res.status(404).json({ message: "Recipe not found." });
+            return;
+        }
+
+        // check if logged in user is authorised (has correct ID or is an admin)
+        if (req.user.userID !== result.rows[0].creator_id.toString() && !req.user.isAdmin) {
+            res.status(403).json({ message: "Unauthorised" });
             return;
         }
 
@@ -953,7 +1040,7 @@ app.put("/api/v1/recipes/:recipeId", async (req, res) => {
              SET recipe_name=$1, recipe_instructions=$2, is_public=$3 
              WHERE recipe_id=$4 
              RETURNING recipe_id, creator_id, recipe_name, recipe_instructions, is_public`,
-            [recipe_name, recipe_instructions, is_public, recipeId]
+            [recipe_name, recipe_instructions, is_public, recipeID]
         );
         res.json(result.rows[0]);
     } catch (error) {
@@ -965,11 +1052,11 @@ app.put("/api/v1/recipes/:recipeId", async (req, res) => {
 // DELETE
 
 // Delete recipe
-app.delete("/api/v1/recipes/:recipeId", async (req, res) => {
-    const { recipeId } = req.params;
+app.delete("/api/v1/recipes/:recipeID", checkAuthenticated, async (req, res) => {
+    const { recipeID } = req.params;
 
     // check if all parameters are defined and of correct type
-    if (!isDefined(recipeId) || isNaN(recipeId)) {
+    if (!isDefined(recipeID) || isNaN(recipeID)) {
         res.status(400).json({ message: "Must provide a valid recipeID." });
         return;
     }
@@ -978,11 +1065,17 @@ app.delete("/api/v1/recipes/:recipeId", async (req, res) => {
     try {
         const result = await db.query(
             "SELECT * FROM recipe WHERE recipe_id=$1",
-            [recipeId]
+            [recipeID]
         );
 
         if (result.rowCount === 0) {
             res.status(404).json({ message: "Recipe not found." });
+            return;
+        }
+
+        // check if logged in user is authorised (has correct ID or is an admin)
+        if (req.user.userID !== result.rows[0].creator_id.toString() && !req.user.isAdmin) {
+            res.status(403).json({ message: "Unauthorised" });
             return;
         }
 
@@ -999,7 +1092,7 @@ app.delete("/api/v1/recipes/:recipeId", async (req, res) => {
     try {
         const result = await db.query(
             "DELETE FROM recipe WHERE recipe_id=$1",
-            [recipeId]
+            [recipeID]
         );
         res.json({ message: "Recipe successfully deleted." });
     } catch (error) {
@@ -1009,14 +1102,14 @@ app.delete("/api/v1/recipes/:recipeId", async (req, res) => {
 });
 
 // Delete ingredient from recipe
-app.delete("/api/v1/recipeIngredients/:ingredientId", async (req, res) => {
+app.delete("/api/v1/recipeIngredients/:ingredientID", checkAuthenticated, async (req, res) => {
     const { recipe_id } = req.body;
-    const { ingredientId } = req.params;
+    const { ingredientID } = req.params;
 
     // check if all parameters are defined and of correct type
-    if (!isDefined(recipe_id, ingredientId)
+    if (!isDefined(recipe_id, ingredientID)
         || isNaN(recipe_id)
-        || isNaN(ingredientId)
+        || isNaN(ingredientID)
     ) {
         res.status(400).json({ message: "Must provide a valid recipe_id and ingredientID." });
         return;
@@ -1034,6 +1127,12 @@ app.delete("/api/v1/recipeIngredients/:ingredientId", async (req, res) => {
             return;
         }
 
+        // check if logged in user is authorised (has correct ID or is an admin)
+        if (req.user.userID !== result.rows[0].creator_id.toString() && !req.user.isAdmin) {
+            res.status(403).json({ message: "Unauthorised" });
+            return;
+        }
+
         if (result.rows[0].is_public) {
             res.status(403).json({ message: "Cannot alter public recipes." }); // forbbiden
             return;
@@ -1048,7 +1147,7 @@ app.delete("/api/v1/recipeIngredients/:ingredientId", async (req, res) => {
     try {
         const queryString = "SELECT * FROM ingredient WHERE ingredient_id=$1";
 
-        if (!await existsInDB(queryString, [ingredientId])) {
+        if (!await existsInDB(queryString, [ingredientID])) {
             res.status(404).json({ message: "Ingredient not found." });
             return;
         }
@@ -1062,7 +1161,7 @@ app.delete("/api/v1/recipeIngredients/:ingredientId", async (req, res) => {
     try {
         const queryString = "SELECT * FROM recipe_ingredient WHERE recipe_id=$1 AND ingredient_id=$2";
 
-        if (!await existsInDB(queryString, [recipe_id, ingredientId])) {
+        if (!await existsInDB(queryString, [recipe_id, ingredientID])) {
             res.status(404).json({ message: "Ingredient is not in the recipe." });
             return;
         }
@@ -1075,7 +1174,7 @@ app.delete("/api/v1/recipeIngredients/:ingredientId", async (req, res) => {
     try {
         const result = await db.query(
             "DELETE FROM recipe_ingredient WHERE recipe_id=$1 AND ingredient_id=$2",
-            [recipe_id, ingredientId]
+            [recipe_id, ingredientID]
         );
         res.json({ message: "Ingredient successfully removed from a recipe." });
     } catch (error) {
@@ -1091,13 +1190,25 @@ app.delete("/api/v1/recipeIngredients/:ingredientId", async (req, res) => {
 // GET
 
 // Get all ingredients
-app.get("/api/v1/ingredients", async (req, res) => {
+app.get("/api/v1/ingredients", checkAuthenticated, async (req, res) => {
+    // return all ingredients for an admin and only approved for public to regular ones
     try {
-        const result = await db.query(
-            `SELECT ingredient_id, ingredient_name 
-             FROM ingredient`
-        );
-        res.json(result.rows);
+        if (req.user.isAdmin) {
+            const result = await db.query(
+                `SELECT ingredient_id, ingredient_name 
+                 FROM ingredient`
+            );
+            res.json(result.rows);
+        }
+        else {
+            const result = await db.query(
+                `SELECT ingredient_id, ingredient_name 
+                 FROM ingredient
+                 WHERE is_approved_for_public=$1`,
+                 [true]
+            );
+            res.json(result.rows);
+        }
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Server error." });
@@ -1105,10 +1216,10 @@ app.get("/api/v1/ingredients", async (req, res) => {
 });
 
 // Get specific ingredient by id
-app.get("/api/v1/ingredients/:ingredientId", async (req, res) => {
-    const { ingredientId } = req.params;
+app.get("/api/v1/ingredients/:ingredientID", checkAuthenticated, async (req, res) => {
+    const { ingredientID } = req.params;
 
-    if (!isDefined(ingredientId) || isNaN(ingredientId)) {
+    if (!isDefined(ingredientID) || isNaN(ingredientID)) {
         res.status(400).json({ message: "Must provide a valid ingredientID." });
         return;
     }
@@ -1118,7 +1229,7 @@ app.get("/api/v1/ingredients/:ingredientId", async (req, res) => {
             `SELECT ingredient_id, ingredient_name
              FROM ingredient
              WHERE ingredient_id=$1`,
-            [ingredientId]
+            [ingredientID]
         );
 
         if (result.rowCount === 0) {
@@ -1136,7 +1247,7 @@ app.get("/api/v1/ingredients/:ingredientId", async (req, res) => {
 // POST
 
 // Create a new ingredient
-app.post("/api/v1/ingredients", async (req, res) => {
+app.post("/api/v1/ingredients", checkAuthenticated, async (req, res) => {
     const { ingredient_name } = req.body;
 
     if (!isDefined(ingredient_name)) {
@@ -1190,12 +1301,10 @@ app.post("/api/v1/ingredients", async (req, res) => {
 // DELETE
 
 // Delete an ingredient
-app.delete("/api/v1/ingredients/:ingredientId", async (req, res) => {
-    const { ingredientId } = req.params;
+app.delete("/api/v1/ingredients/:ingredientID", checkAdmin, async (req, res) => {
+    const { ingredientID } = req.params;
 
-    // TODO can only be deleted by an admin
-
-    if (!isDefined(ingredientId) || isNaN(ingredientId)) {
+    if (!isDefined(ingredientID) || isNaN(ingredientID)) {
         res.status(400).json({ message: "Must provide a valid ingredientID." });
         return;
     }
@@ -1204,7 +1313,7 @@ app.delete("/api/v1/ingredients/:ingredientId", async (req, res) => {
     try {
         const queryString = "SELECT * FROM ingredient WHERE ingredient_id=$1";
 
-        if (!await existsInDB(queryString, [ingredientId])) {
+        if (!await existsInDB(queryString, [ingredientID])) {
             res.status(404).json({ message: "Ingredient not found." });
             return;
         }
@@ -1218,7 +1327,7 @@ app.delete("/api/v1/ingredients/:ingredientId", async (req, res) => {
     try {
         const queryString = "SELECT * FROM recipe_ingredient WHERE ingredient_id=$1";
 
-        if (await existsInDB(queryString, [ingredientId])) {
+        if (await existsInDB(queryString, [ingredientID])) {
             res.status(400).json({ message: "Ingredient is used by a recipe." });
             return;
         }
@@ -1231,7 +1340,7 @@ app.delete("/api/v1/ingredients/:ingredientId", async (req, res) => {
     try {
         const result = await db.query(
             "DELETE FROM ingredient WHERE ingredient_id=$1",
-            [ingredientId]
+            [ingredientID]
         );
         res.status(200).json({ message: "Ingredient successfullt deleted." });
     } catch (error) {
