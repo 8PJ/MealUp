@@ -3,12 +3,13 @@ const express = require("express");
 const bcrypt = require("bcrypt");
 const db = require("./db");
 
-const passport = require("./auth/passportAuth");
+const passport = require("./authSetup/passportAuth");
 const { isDefined, existsInDB } = require("./functions/validation");
+const { checkAuthenticated } = require("./functions/auth");
 
 const app = express();
 
-require("./auth/sessionAuth")(app);
+require("./authSetup/sessionAuth")(app);
 
 // middleware
 app.use(express.json());
@@ -20,7 +21,7 @@ app.use((error, req, res, next) => {
         res.status(400).json({ message: "Request may have a syntax error." });
         return;
     }
-    next();
+    return next();
 });
 
 // root route for testing (will later serve react app)
@@ -44,6 +45,7 @@ app.get("/", async (req, res) => {
 
 // Log in user
 app.post("/login", async (req, res, next) => {
+    
     if (req.isAuthenticated()) {
         res.json({ message: "You are already logged in." });
         return;
@@ -81,7 +83,7 @@ app.post("/login", async (req, res, next) => {
 // GET
 
 // Get all recipes created by a user
-app.get("/users/:userId/createdRecipes", async (req, res) => {
+app.get("/api/v1/users/:userId/createdRecipes", async (req, res) => {
     const { userId } = req.params;
 
     // check if userId is defined and of the right type
@@ -118,7 +120,7 @@ app.get("/users/:userId/createdRecipes", async (req, res) => {
 });
 
 // Get all recipes followed by a user
-app.get("/users/:userId/followedRecipes", async (req, res) => {
+app.get("/api/v1/users/:userId/followedRecipes", async (req, res) => {
     const { userId } = req.params;
 
     // check if userId is defined and of the right type
@@ -157,7 +159,7 @@ app.get("/users/:userId/followedRecipes", async (req, res) => {
 });
 
 // Get all recipes that are used for a meal plan by a user
-app.get("/users/:userId/mealPlanRecipes", async (req, res) => {
+app.get("/api/v1/users/:userId/mealPlanRecipes", async (req, res) => {
     const { userId } = req.params;
 
     // check if all parameters are defined and of the right type
@@ -196,7 +198,7 @@ app.get("/users/:userId/mealPlanRecipes", async (req, res) => {
 });
 
 // Get all favourited ingredients by a user
-app.get("/users/:userId/favouriteIngredients", async (req, res) => {
+app.get("/api/v1/users/:userId/favouriteIngredients", async (req, res) => {
     const { userId } = req.params;
 
     // check if all parameters are defined and of the right type
@@ -237,7 +239,7 @@ app.get("/users/:userId/favouriteIngredients", async (req, res) => {
 // POST
 
 // Create a new user
-app.post("/users", async (req, res) => {
+app.post("/api/v1/users", async (req, res) => {
     const { username, email, password } = req.body;
 
     // check if all parameters are defined 
@@ -338,7 +340,7 @@ app.post("/users", async (req, res) => {
 });
 
 // Add a recipe to user's followed recipes
-app.post("/users/:userId/followedRecipes", async (req, res) => {
+app.post("/api/v1/users/:userId/followedRecipes", async (req, res) => {
     const { recipe_id, is_used_for_meal_plan } = req.body;
     const { userId } = req.params;
 
@@ -410,7 +412,7 @@ app.post("/users/:userId/followedRecipes", async (req, res) => {
 // PATCH
 
 // Add/Remove a recipe from user's meal plan recipes
-app.patch("/mealPlanRecipes/:recipeId", async (req, res) => {
+app.patch("/api/v1/mealPlanRecipes/:recipeId", async (req, res) => {
     const { user_id, is_used_for_meal_plan } = req.body;
     const { recipeId } = req.params;
 
@@ -484,7 +486,7 @@ app.patch("/mealPlanRecipes/:recipeId", async (req, res) => {
 });
 
 // Favourite/unfavourite an ingredient for a user
-app.patch("/favouriteIngredients/:ingredientId", async (req, res) => {
+app.patch("/api/v1/favouriteIngredients/:ingredientId", async (req, res) => {
     const { user_id, is_favourite } = req.body;
     const { ingredientId } = req.params;
 
@@ -566,7 +568,7 @@ app.patch("/favouriteIngredients/:ingredientId", async (req, res) => {
 // DELETE
 
 // Delete a recipe from user's followed recipes
-app.delete("/followedRecipes/:recipeId", async (req, res) => {
+app.delete("/api/v1/followedRecipes/:recipeId", async (req, res) => {
     const { user_id } = req.body;
     const { recipeId } = req.params;
 
@@ -639,7 +641,7 @@ app.delete("/followedRecipes/:recipeId", async (req, res) => {
 // GET
 
 // Get all recipes
-app.get("/recipes", async (req, res) => {
+app.get("/api/v1/recipes", async (req, res) => {
     try {
         const result = await db.query(
             `SELECT recipe_id, creator_id, recipe_name, recipe_instructions, is_public 
@@ -653,7 +655,7 @@ app.get("/recipes", async (req, res) => {
 });
 
 // Get specific recipe by id
-app.get("/recipes/:recipeId", async (req, res) => {
+app.get("/api/v1/recipes/:recipeId", async (req, res) => {
     const { recipeId } = req.params;
 
     // check if all parameters are defined and of correct type
@@ -682,7 +684,7 @@ app.get("/recipes/:recipeId", async (req, res) => {
 });
 
 // Get all ingredients of a specified recipe
-app.get("/recipes/:recipeId/recipeIngredients", async (req, res) => {
+app.get("/api/v1/recipes/:recipeId/recipeIngredients", async (req, res) => {
     const { recipeId } = req.params;
 
     // check if all parameters are defined and of correct type
@@ -723,7 +725,7 @@ app.get("/recipes/:recipeId/recipeIngredients", async (req, res) => {
 // POST
 
 // Create a new recipe
-app.post("/recipes", async (req, res) => {
+app.post("/api/v1/recipes", async (req, res) => {
     const { recipe_name, creator_id, recipe_instructions } = req.body;
 
     // check if all parameters are defined and of correct type
@@ -789,7 +791,7 @@ app.post("/recipes", async (req, res) => {
 });
 
 // Add ingredient to recipe
-app.post("/recipes/:recipeId/recipeIngredients", async (req, res) => {
+app.post("/api/v1/recipes/:recipeId/recipeIngredients", async (req, res) => {
     const { ingredient_id, amount, measurement } = req.body;
     const { recipeId } = req.params;
 
@@ -873,7 +875,7 @@ app.post("/recipes/:recipeId/recipeIngredients", async (req, res) => {
 // PUT
 
 // Make recipe public, change its name or instructions (reject all other changes)
-app.put("/recipes/:recipeId", async (req, res) => {
+app.put("/api/v1/recipes/:recipeId", async (req, res) => {
     const { creator_id, recipe_name, recipe_instructions, is_public } = req.body;
     const { recipeId } = req.params;
 
@@ -963,7 +965,7 @@ app.put("/recipes/:recipeId", async (req, res) => {
 // DELETE
 
 // Delete recipe
-app.delete("/recipes/:recipeId", async (req, res) => {
+app.delete("/api/v1/recipes/:recipeId", async (req, res) => {
     const { recipeId } = req.params;
 
     // check if all parameters are defined and of correct type
@@ -1007,7 +1009,7 @@ app.delete("/recipes/:recipeId", async (req, res) => {
 });
 
 // Delete ingredient from recipe
-app.delete("/recipeIngredients/:ingredientId", async (req, res) => {
+app.delete("/api/v1/recipeIngredients/:ingredientId", async (req, res) => {
     const { recipe_id } = req.body;
     const { ingredientId } = req.params;
 
@@ -1089,7 +1091,7 @@ app.delete("/recipeIngredients/:ingredientId", async (req, res) => {
 // GET
 
 // Get all ingredients
-app.get("/ingredients", async (req, res) => {
+app.get("/api/v1/ingredients", async (req, res) => {
     try {
         const result = await db.query(
             `SELECT ingredient_id, ingredient_name 
@@ -1103,7 +1105,7 @@ app.get("/ingredients", async (req, res) => {
 });
 
 // Get specific ingredient by id
-app.get("/ingredients/:ingredientId", async (req, res) => {
+app.get("/api/v1/ingredients/:ingredientId", async (req, res) => {
     const { ingredientId } = req.params;
 
     if (!isDefined(ingredientId) || isNaN(ingredientId)) {
@@ -1134,7 +1136,7 @@ app.get("/ingredients/:ingredientId", async (req, res) => {
 // POST
 
 // Create a new ingredient
-app.post("/ingredients", async (req, res) => {
+app.post("/api/v1/ingredients", async (req, res) => {
     const { ingredient_name } = req.body;
 
     if (!isDefined(ingredient_name)) {
@@ -1188,7 +1190,7 @@ app.post("/ingredients", async (req, res) => {
 // DELETE
 
 // Delete an ingredient
-app.delete("/ingredients/:ingredientId", async (req, res) => {
+app.delete("/api/v1/ingredients/:ingredientId", async (req, res) => {
     const { ingredientId } = req.params;
 
     // TODO can only be deleted by an admin
