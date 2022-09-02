@@ -26,7 +26,7 @@ app.get("/", async (req, res) => {
             [1]
         );
         console.log(result.rows);
-        res.json(result.rows);
+        res.json({message: "it's working"});
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Server error." });
@@ -62,12 +62,27 @@ app.post("/login", async (req, res, next) => {
                 res.status(500).json({ message: "Failed to log in." });
                 return;
             }
-            res.json({ message: "You have successfylly logged in" });
+            res.json({ message: "Successfylly logged in" });
         });
     })(req, res, next);
 });
 
-// TODO create log out
+// Log in user
+app.post("/logout", async (req, res, next) => {
+    if (!req.isAuthenticated()) {
+        res.json({ message: "You are not logged in." });
+        return;
+    }
+
+    req.logOut((error) => {
+        if (error) {
+            console.log(error);
+            res.status(500).json({ message: "Failed to log out." });
+            return;
+        }
+        res.json({ message: "You have successfylly logged out" });
+    })
+});
 
 ///////////////
 // user APIs //
@@ -346,16 +361,23 @@ app.post("/api/v1/users", async (req, res) => {
         const result = await db.query(
             `INSERT INTO app_user (username, email, password, time_created, is_admin)
              VALUES($1, $2, $3, NOW(), $4)
-             RETURNING user_id, username, email`,
+             RETURNING user_id, username, email, is_admin`,
             [username, email, hash, false]
         );
-        res.json(result.rows[0]);
+
+        // log user in after registering
+        req.logIn(result.rows[0], (error2) => {
+            if (error2) {
+                res.status(500).json({ message: "Failed to log in after registering." });
+                return;
+            }
+            const { user_id, username, email } = result.rows[0];
+            res.json({ user_id, username, email });
+        });
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Server error." });
     }
-
-    // TODO log user in after registering
 });
 
 // Add a recipe to user's followed recipes
@@ -709,9 +731,8 @@ app.get("/api/v1/recipes", checkAuthenticated, async (req, res) => {
 
 // Get specific recipe by id
 app.get("/api/v1/recipes/:recipeID", checkAuthenticated, async (req, res) => {
-    // TODO check if specific user or admin or recipe public
     const { recipeID } = req.params;
-
+    
     // check if all parameters are defined and of correct type
     if (!isDefined(recipeID) || isNaN(recipeID)) {
         res.status(400).json({ message: "Must provide a valid recipeID." });
@@ -746,9 +767,8 @@ app.get("/api/v1/recipes/:recipeID", checkAuthenticated, async (req, res) => {
 
 // Get all ingredients of a specified recipe
 app.get("/api/v1/recipes/:recipeID/recipeIngredients", checkAuthenticated, async (req, res) => {
-    // TODO check if specific user or admin or recipe public
     const { recipeID } = req.params;
-
+    
     // check if all parameters are defined and of correct type
     if (!isDefined(recipeID) || isNaN(recipeID)) {
         res.status(400).json({ message: "Must provide a valid recipeID." });
@@ -956,7 +976,6 @@ app.post("/api/v1/recipes/:recipeID/recipeIngredients", checkAuthenticated, asyn
 
 // Make recipe public, change its name or instructions (reject all other changes)
 app.put("/api/v1/recipes/:recipeID", checkAuthenticated, async (req, res) => {
-    // TODO check if specific user or admin
     const { creator_id, recipe_name, recipe_instructions, is_public } = req.body;
     const { recipeID } = req.params;
 
@@ -1205,7 +1224,7 @@ app.get("/api/v1/ingredients", checkAuthenticated, async (req, res) => {
                 `SELECT ingredient_id, ingredient_name 
                  FROM ingredient
                  WHERE is_approved_for_public=$1`,
-                 [true]
+                [true]
             );
             res.json(result.rows);
         }
