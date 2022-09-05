@@ -1,3 +1,21 @@
 body {
   background-color: #EEEEEE;
 }
+
+/* Nav bar */
+
+.navLinks {
+  padding-right: 6rem;
+}
+
+.navLink {
+  margin-left: 1rem;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.mainNav {
+  background-color: green;
+}
+
+/* --------- */
