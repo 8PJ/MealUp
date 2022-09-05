@@ -1,21 +1,49 @@
 body {
-  background-color: #EEEEEE;
+  background-color: #929B92;
 }
 
 /* Nav bar */
 
+.logo {
+  font-family: "Josefin Sans", sans-serif;
+  font-size: 1.5rem;
+}
+
 .navLinks {
-  padding-right: 6rem;
+  padding-right: 5rem;
+
+  font-family: "Roboto", sans-serif;
+  font-weight: 400;
 }
 
 .navLink {
-  margin-left: 1rem;
-  font-weight: bold;
+  margin-right: 1rem;
+
   font-size: 1.2rem;
+  letter-spacing: 0.1rem;
 }
 
 .mainNav {
-  background-color: green;
+  background: transparent;
+  /* #6bb36b */
+  /* #A5BF69 */
 }
 
-/* --------- */
+/* Hero Area */
+
+.HeroArea {
+  margin-top: 5rem;
+  color: #E6E6E6;
+
+  font-family: "Josefin Sans", sans-serif;
+
+  border-bottom: 1px solid #E6E6E6;
+}
+
+.heroMessage {
+  font-size: 5rem;
+}
+
+.heroMessage2 {
+  font-size: 3rem;
+}
