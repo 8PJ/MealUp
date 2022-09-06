@@ -1,7 +1,7 @@
 import Hero from "../components/Hero";
 
 function Home(props) {
-  return <Hero />;
+    return <Hero />;
 }
 
 export default Home;
