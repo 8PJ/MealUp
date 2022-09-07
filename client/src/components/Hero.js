@@ -1,4 +1,5 @@
 import Container from "react-bootstrap/Container";
+import Button from "react-bootstrap/Button";
 
 function Hero(props) {
     return (
@@ -20,7 +21,9 @@ function Hero(props) {
             </Container>
             <Container className="d-flex justify-content-center heroCallToAction">
                 <a href="#Register">
-                    <div className="heroCallToActionLink">Get Started</div>
+                    <Button variant="outline-dark" type="button" className="heroButton" size="lg">
+                        Get Started
+                    </Button>
                 </a>
             </Container>
         </>

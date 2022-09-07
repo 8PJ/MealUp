@@ -1,9 +1,12 @@
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
-import FooterComp from "./components/FooterComp";
 
+import FooterComp from "./components/FooterComp";
 import NavbarComp from "./components/NavbarComp";
+
 import Home from "./routes/Home";
+import Login from "./routes/Login";
+import Register from "./routes/Register";
 
 function App() {
     return (
@@ -11,6 +14,8 @@ function App() {
             <div id="siteWrapper">
                 <NavbarComp />
                 <Home />
+                <Register />
+                <Login />
             </div>
             <FooterComp />
         </>
