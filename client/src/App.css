@@ -248,4 +248,67 @@ a:hover {
   }
 }
 
-/* Register */
+/* Recipes */
+
+
+/* Recipe Navigation */
+
+
+/* Recipe Breadcrumb */
+
+.recipeNavigation {
+  margin-top: 1rem;
+
+  --bs-breadcrumb-divider: '|';
+}
+
+.recipeBreadcrumbItem {
+  font-size: 1.3rem;
+}
+
+.breadcrumb-item+.breadcrumb-item::before {
+  margin-left: 1rem;
+  margin-right: 1rem;
+}
+
+.breadcrumb-item.active {
+  color: #E6E6E6;
+  text-decoration: underline;
+}
+
+@media (max-width:768px) {
+  .recipeBreadcrumbItem {
+    font-size: 1rem;
+  }
+
+  .breadcrumb-item+.breadcrumb-item::before {
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+  }
+}
+
+/* Recipe Dropdown */
+
+.dropdownButton {
+  font-size: 1rem;
+  font-family: "Josefin Sans", sans-serif;
+  font-weight: 300;
+}
+
+.dropDownItems {
+  width: 100%;
+
+  background-color: #E6E6E6;
+}
+
+.dropdownItem {
+  font-size: 0.8rem;
+  font-family: "Roboto", sans-serif;
+  font-weight: 400;
+}
+
+.dropdown-item.active {
+  color: #E6E6E6;
+
+  background-color: #424F42;
+}

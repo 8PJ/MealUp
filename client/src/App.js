@@ -6,6 +6,7 @@ import NavbarComp from "./components/NavbarComp";
 
 import Home from "./routes/Home";
 import Login from "./routes/Login";
+import Recipes from "./routes/Recipes";
 import Register from "./routes/Register";
 
 function App() {
@@ -13,9 +14,10 @@ function App() {
         <>
             <div id="siteWrapper">
                 <NavbarComp />
-                <Home />
+                {/* <Home />
                 <Register />
-                <Login />
+                <Login /> */}
+                <Recipes />
             </div>
             <FooterComp />
         </>
