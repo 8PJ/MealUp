@@ -318,8 +318,18 @@ a:hover {
 
     border: 3px solid #e6e6e6;
     border-radius: 8px;
+}
 
-    max-width: 30%;
+@media (min-width: 1200px) {
+    .recipeWall .col-xl-3 {
+        width: calc(100% / 3);
+    }
+}
+
+@media (min-width: 1400px) {
+    .recipeWall .col-xl-3 {
+        width: 25%;
+    }
 }
 
 .recipeName {
@@ -338,4 +348,20 @@ a:hover {
 
 .recipeIngredients {
     font-size: 1.1rem;
+}
+
+.recipeExpandButton {
+    margin-top: 1rem;
+
+    font-size: 1rem;
+}
+
+.recipeWall {
+    margin: 1rem 5rem;
+}
+
+@media (max-width: 1200px) {
+    .recipeWall {
+        margin: 1rem 1rem;
+    }
 }
