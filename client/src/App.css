@@ -212,11 +212,13 @@ a:hover {
     color: #424f42;
 
     max-width: 30%;
+    min-width: 30%;
 }
 
 @media (max-width: 1200px) {
     #inputFormContainer {
-        max-width: 35%;
+        max-width: 40%;
+        min-width: 40%;
     }
 }
 
@@ -224,31 +226,35 @@ a:hover {
     #inputFormContainer {
         margin-top: 5rem;
 
-        max-width: 40%;
+        max-width: 50%;
+        min-width: 50%;
     }
 }
 
 @media (max-width: 768px) {
     #inputFormContainer {
-        max-width: 50%;
+        padding: 2rem;
+
+        max-width: 60%;
+        min-width: 60%;
     }
 }
 
 @media (max-width: 576px) {
     #inputFormContainer {
-        max-width: 55%;
+        max-width: 70%;
+        min-width: 70%;
     }
 }
 
 @media (max-width: 464px) {
     #inputFormContainer {
-        min-width: 80%;
+        padding: 1.5rem;
+
+        max-width: 90%;
+        min-width: 90%;
     }
 }
-
-/* Recipes */
-
-/* Recipe Navigation */
 
 /* Recipe Breadcrumb */
 
@@ -363,5 +369,53 @@ a:hover {
 @media (max-width: 1200px) {
     .recipeWall {
         margin: 1rem 1rem;
+    }
+}
+
+/* New Recipe Form */
+
+.NewRecipeIngredientList {
+    margin: 1rem 0rem;
+}
+
+.recipeNavigation + #inputFormContainer {
+    margin-top: 4rem;
+
+    max-width: 50%;
+    min-width: 50%;
+}
+
+@media (max-width: 1200px) {
+    .recipeNavigation + #inputFormContainer {
+        max-width: 60%;
+        min-width: 60%;
+    }
+}
+
+@media (max-width: 992px) {
+    .recipeNavigation + #inputFormContainer {
+        max-width: 70%;
+        min-width: 70%;
+    }
+}
+
+@media (max-width: 768px) {
+    .recipeNavigation + #inputFormContainer {
+        max-width: 80%;
+        min-width: 80%;
+    }
+}
+
+@media (max-width: 576px) {
+    .recipeNavigation + #inputFormContainer {
+        max-width: 90%;
+        min-width: 90%;
+    }
+}
+
+@media (max-width: 464px) {
+    .recipeNavigation + #inputFormContainer {
+        max-width: 95%;
+        min-width: 95%;
     }
 }

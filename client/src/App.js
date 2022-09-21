@@ -6,18 +6,22 @@ import NavbarComp from "./components/NavbarComp";
 
 import Home from "./routes/Home";
 import Login from "./routes/Login";
-import Recipes from "./routes/Recipes";
 import Register from "./routes/Register";
+import FollowedRecipes from "./routes/recipes/FollowedRecipes";
+import CreateNewRecipe from "./routes/recipes/CreateNewRicpe"
+import CreatedRecipes from "./routes/recipes/CreatedRecipes"
 
 function App() {
     return (
         <>
             <div id="siteWrapper">
                 <NavbarComp />
-                {/* <Home />
-                <Register />
-                <Login /> */}
-                <Recipes />
+                {/* <Home /> */}
+                {/* <Register /> */}
+                {/* <Login /> */}
+                {/* <FollowedRecipes /> */}
+                {/* <CreatedRecipes /> */}
+                <CreateNewRecipe />
             </div>
             <FooterComp />
         </>

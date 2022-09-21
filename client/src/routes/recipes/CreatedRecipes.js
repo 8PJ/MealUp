@@ -4,11 +4,11 @@ import Container from "react-bootstrap/esm/Container";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 
-import RecipeBreadcrumb from "../components/recipe/RecipeBreadcrumb";
-import RecipeDropdown from "../components/recipe/RecipeDropdown";
-import Recipe from "../components/recipe/Recipe";
+import RecipeBreadcrumb from "../../components/recipe/RecipeBreadcrumb";
+import RecipeDropdown from "../../components/recipe/RecipeDropdown";
+import Recipe from "../../components/recipe/Recipe";
 
-function Recipes(props) {
+function FollowedRecipes(props) {
     // render Dropdown when window.innerWidth <= 464
     const [isDropdown, setIsDropdown] = useState(window.innerWidth <= 464);
 
@@ -88,4 +88,4 @@ function Recipes(props) {
     );
 }
 
-export default Recipes;
+export default FollowedRecipes;
