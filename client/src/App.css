@@ -435,3 +435,27 @@ a:hover {
         max-width: 25%;
     }
 }
+
+/* Meal Plan carousel */
+
+.mealPlanCarouselContainer {
+    margin-top: 3rem;
+
+    width: 40%;
+}
+
+.carousel-caption {
+    position: relative;
+    left: auto;
+    right: auto;
+}
+
+.carousel-control-prev {
+    margin-left: -8rem;
+    margin-bottom: 7rem;
+}
+
+.carousel-control-next {
+    margin-right: -8rem;
+    margin-bottom: 7rem;
+}
