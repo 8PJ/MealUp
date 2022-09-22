@@ -25,6 +25,7 @@ function NewRicpeForm(props) {
             setIngredients((prev) => [...prev, newIngredient]);
             setIngredientName("");
             setAmount("");
+            setMeasurement("kg");
         }
     };
 
@@ -61,11 +62,11 @@ function NewRicpeForm(props) {
                             value={measurement}
                             onChange={(e) => setMeasurement(e.target.value)}
                         >
+                            <option>x</option>
                             <option>kg</option>
                             <option>g</option>
                             <option>l</option>
                             <option>ml</option>
-                            <option>x</option>
                             <option>tbsp</option>
                             <option>tsp</option>
                         </Form.Select>

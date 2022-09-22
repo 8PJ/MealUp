@@ -8,8 +8,10 @@ import Home from "./routes/Home";
 import Login from "./routes/Login";
 import Register from "./routes/Register";
 import FollowedRecipes from "./routes/recipes/FollowedRecipes";
-import CreateNewRecipe from "./routes/recipes/CreateNewRicpe"
 import CreatedRecipes from "./routes/recipes/CreatedRecipes"
+import CreateNewRecipe from "./routes/recipes/CreateNewRicpe"
+import MealPlan from "./routes/MealPlan";
+
 
 function App() {
     return (
@@ -21,7 +23,8 @@ function App() {
                 {/* <Login /> */}
                 {/* <FollowedRecipes /> */}
                 {/* <CreatedRecipes /> */}
-                <CreateNewRecipe />
+                {/* <CreateNewRecipe /> */}
+                <MealPlan />
             </div>
             <FooterComp />
         </>
