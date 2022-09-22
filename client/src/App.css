@@ -385,10 +385,18 @@ a:hover {
     min-width: 50%;
 }
 
+.newRecipeFormSubfield {
+    max-width: 15%;
+}
+
 @media (max-width: 1200px) {
     .recipeNavigation + #inputFormContainer {
         max-width: 60%;
         min-width: 60%;
+    }
+
+    .newRecipeFormSubfield {
+        max-width: 15%;
     }
 }
 
@@ -404,6 +412,10 @@ a:hover {
         max-width: 80%;
         min-width: 80%;
     }
+
+    .newRecipeFormSubfield + .newRecipeFormSubfield {
+        max-width: 20%;
+    }
 }
 
 @media (max-width: 576px) {
@@ -417,5 +429,9 @@ a:hover {
     .recipeNavigation + #inputFormContainer {
         max-width: 95%;
         min-width: 95%;
+    }
+
+    .newRecipeFormSubfield + .newRecipeFormSubfield {
+        max-width: 25%;
     }
 }

@@ -1,32 +1,13 @@
-import { useState, useEffect } from "react";
-
-import Container from "react-bootstrap/esm/Container";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 
-import RecipeBreadcrumb from "../../components/recipe/RecipeBreadcrumb";
-import RecipeDropdown from "../../components/recipe/RecipeDropdown";
+import RecipeSectionSelection from "../../components/recipe/RecipeSectionSelection";
 import Recipe from "../../components/recipe/Recipe";
 
 function FollowedRecipes(props) {
-    // render Dropdown when window.innerWidth <= 464
-    const [isDropdown, setIsDropdown] = useState(window.innerWidth <= 464);
-
-    useEffect(() => {
-        const handleWindowResize = () => setIsDropdown(window.innerWidth <= 464);
-
-        window.addEventListener("resize", handleWindowResize);
-
-        return () => {
-            window.removeEventListener("resize", handleWindowResize);
-        };
-    }, []);
-
     return (
         <>
-            <Container className="recipeNavigation d-flex justify-content-center">
-                {isDropdown ? <RecipeDropdown /> : <RecipeBreadcrumb />}
-            </Container>
+            <RecipeSectionSelection />
             <Row className="recipeWall">
                 <Col xs={12} sm={6} lg={4} xl={3}>
                     <Recipe
