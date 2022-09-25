@@ -6,22 +6,19 @@ import Recipe from "../components/recipe/Recipe.js";
 function MealPlan() {
     return (
         <Container className="mealPlanCarouselContainer">
-            <Carousel wrap={false}>
+            <Carousel wrap={false} interval={null}>
                 <Carousel.Item>
-                    <Container>
-                        <Recipe
-                            recipeID={1}
-                            name="Recipe name"
-                            ingredients={["Ingredient1", "Ingredient2", "Ingredient3"]}
-                            description="Lorem Ipsum is simply dummy text of the printing and typesetting
+                    <Recipe
+                        recipeID={1}
+                        name="Recipe name"
+                        ingredients={["Ingredient1", "Ingredient2", "Ingredient3"]}
+                        description="Lorem Ipsum is simply dummy text of the printing and typesetting
                 industry. Lorem Ipsum has been the industry's standard dummy
                 text ever since the 1500s, when an unknown printer took a galley
                 of type and scrambled it to make a type specimen book."
-                        />
-                    </Container>
+                    />
                     <Carousel.Caption>
-                        <h3>First slide label</h3>
-                        <p>Nulla vitae elit libero, a pharetra augue mollis interdum.</p>
+                        <h3>Today</h3>
                     </Carousel.Caption>
                 </Carousel.Item>
                 <Carousel.Item>
@@ -36,8 +33,7 @@ function MealPlan() {
                     />
 
                     <Carousel.Caption>
-                        <h3>Second slide label</h3>
-                        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+                        <h3>Tomorrow</h3>
                     </Carousel.Caption>
                 </Carousel.Item>
                 <Carousel.Item>
@@ -51,8 +47,7 @@ function MealPlan() {
                 of type and scrambled it to make a type specimen book."
                     />
                     <Carousel.Caption>
-                        <h3>Third slide label</h3>
-                        <p>Praesent commodo cursus magna, vel scelerisque nisl consectetur.</p>
+                        <h3>Tuesday, 27 Septempber</h3>
                     </Carousel.Caption>
                 </Carousel.Item>
             </Carousel>
