@@ -8,6 +8,7 @@ module.exports = (app) => {
         store: new pgSession({
             pool: db,
             tableName: "session",
+            // createTableIfMissing: true, // creates session table if it is missing
             ttl: 86400 // 24 hours
         }),
         secret: process.env.COOKIE_SECRET,
