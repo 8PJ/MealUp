@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 import Container from "react-bootstrap/Container";
 import Button from "react-bootstrap/Button";
 
@@ -20,11 +22,11 @@ function Hero(props) {
                 </p>
             </Container>
             <Container className="d-flex justify-content-center heroCallToAction">
-                <a href="#Register">
+                <Link to="/register">
                     <Button variant="outline-dark" type="button" className="heroButton" size="lg">
                         Get Started
                     </Button>
-                </a>
+                </Link>
             </Container>
         </>
     );
