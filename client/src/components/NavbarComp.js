@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 
 import Navbar from "react-bootstrap/Navbar";
 import Nav from "react-bootstrap/Nav";
@@ -14,12 +14,12 @@ function NavbarComp(props) {
                 <Navbar.Toggle aria-controls="responsive-navbar-nav" />
                 <Navbar.Collapse className="navLinks justify-content-end" id="responsive-navbar-nav">
                     <Nav>
-                        <Link className="navLink" to="Register">
+                        <NavLink className="navLink" to="Register">
                             Register
-                        </Link>
-                        <Link className="navLink" to="Login">
+                        </NavLink>
+                        <NavLink className="navLink" to="Login">
                             Login
-                        </Link>
+                        </NavLink>
                     </Nav>
                 </Navbar.Collapse>
             </Container>

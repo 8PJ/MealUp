@@ -22,8 +22,8 @@ function App() {
                 <NavbarComp />
                 <Routes>
                     <Route path="/" element={<Home />} />
-                    <Route path="register" element={<Register />} />
                     <Route path="login" element={<Login />} />
+                    <Route path="register" element={<Register />} />
                     <Route path="recipes" element={<RecipeSectionSelection />}>
                         <Route path="followedRecipes" element={<FollowedRecipes />} />
                         <Route path="createdRecipes" element={<CreatedRecipes />} />
