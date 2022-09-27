@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Outlet } from "react-router-dom";
 
 import Container from "react-bootstrap/esm/Container";
 
@@ -20,9 +21,12 @@ function RecipeSectionSelection() {
     }, []);
 
     return (
-        <Container className="recipeNavigation d-flex justify-content-center">
-            {isDropdown ? <RecipeDropdown /> : <RecipeBreadcrumb />}
-        </Container>
+        <>
+            <Container className="recipeNavigation d-flex justify-content-center">
+                {isDropdown ? <RecipeDropdown /> : <RecipeBreadcrumb />}
+            </Container>
+            <Outlet />
+        </>
     );
 }
 

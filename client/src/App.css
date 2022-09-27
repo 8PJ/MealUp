@@ -379,7 +379,7 @@ a:hover {
 }
 
 .recipeNavigation + #inputFormContainer {
-    margin-top: 4rem;
+    margin-top: 2rem;
 
     max-width: 50%;
     min-width: 50%;
