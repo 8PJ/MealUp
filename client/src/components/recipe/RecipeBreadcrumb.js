@@ -6,22 +6,20 @@ function RecipeBreadcrumb(props) {
     return (
         <Breadcrumb>
             <Breadcrumb.Item>
-                <NavLink replace className="breadCrumbLink" to="followed">
+                <NavLink className="breadCrumbLink" to="followed">
                     Followed
                 </NavLink>
             </Breadcrumb.Item>
             <Breadcrumb.Item>
-                <NavLink replace className="breadCrumbLink" to="created">
+                <NavLink className="breadCrumbLink" to="created">
                     Created
                 </NavLink>
             </Breadcrumb.Item>
             <Breadcrumb.Item>
-                <NavLink replace className="breadCrumbLink disabled">
-                    Discover New
-                </NavLink>
+                <NavLink className="breadCrumbLink disabled">Discover New</NavLink>
             </Breadcrumb.Item>
             <Breadcrumb.Item>
-                <NavLink replace className="breadCrumbLink" to="createNew">
+                <NavLink className="breadCrumbLink" to="createNew">
                     Create New
                 </NavLink>
             </Breadcrumb.Item>

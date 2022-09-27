@@ -1,3 +1,4 @@
+import { NavLink } from "react-router-dom";
 import Dropdown from "react-bootstrap/Dropdown";
 
 function RecipeDropdown(props) {
@@ -8,10 +9,18 @@ function RecipeDropdown(props) {
             </Dropdown.Toggle>
 
             <Dropdown.Menu className="dropDownItems">
-                <Dropdown.Item active disabled className="dropdownItem" href="/myRecipes/followed">Followed</Dropdown.Item>
-                <Dropdown.Item className="dropdownItem" href="/myRecipes/created">Created</Dropdown.Item>
-                <Dropdown.Item className="dropdownItem" href="/myRecipes/discoverNew">Discover New</Dropdown.Item>
-                <Dropdown.Item className="dropdownItem" href="/myRecipes/createNew">Create New</Dropdown.Item>
+                <Dropdown.Item as={NavLink} to="followed" className="dropdownItem">
+                    Followed
+                </Dropdown.Item>
+                <Dropdown.Item as={NavLink} to="created" className="dropdownItem">
+                    Created
+                </Dropdown.Item>
+                <Dropdown.Item disabled as={NavLink} className="dropdownItem">
+                    Discover New
+                </Dropdown.Item>
+                <Dropdown.Item as={NavLink} to="createNew" className="dropdownItem">
+                    Create New
+                </Dropdown.Item>
             </Dropdown.Menu>
         </Dropdown>
     );
