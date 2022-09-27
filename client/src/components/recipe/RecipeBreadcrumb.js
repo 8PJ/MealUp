@@ -1,19 +1,29 @@
+import { NavLink } from "react-router-dom";
+
 import Breadcrumb from "react-bootstrap/Breadcrumb";
 
 function RecipeBreadcrumb(props) {
     return (
         <Breadcrumb>
-            <Breadcrumb.Item active href="/myRecipes/followed" className="recipeBreadcrumbItem">
-                Followed
+            <Breadcrumb.Item>
+                <NavLink replace className="breadCrumbLink" to="followed">
+                    Followed
+                </NavLink>
             </Breadcrumb.Item>
-            <Breadcrumb.Item href="/myRecipes/created" className="recipeBreadcrumbItem">
-                Created
+            <Breadcrumb.Item>
+                <NavLink replace className="breadCrumbLink" to="created">
+                    Created
+                </NavLink>
             </Breadcrumb.Item>
-            <Breadcrumb.Item href="/myRecipes/discoverNew" className="recipeBreadcrumbItem">
-                Discover New
+            <Breadcrumb.Item>
+                <NavLink replace className="breadCrumbLink disabled">
+                    Discover New
+                </NavLink>
             </Breadcrumb.Item>
-            <Breadcrumb.Item href="/myRecipes/createNew" className="recipeBreadcrumbItem">
-                Create New
+            <Breadcrumb.Item>
+                <NavLink replace className="breadCrumbLink" to="createNew">
+                    Create New
+                </NavLink>
             </Breadcrumb.Item>
         </Breadcrumb>
     );

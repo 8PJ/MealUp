@@ -270,8 +270,24 @@ a:hover {
     --bs-breadcrumb-divider: "|";
 }
 
-.recipeBreadcrumbItem {
+.breadCrumbLink {
     font-size: 1.3rem;
+}
+
+.breadCrumbLink.active {
+    color: #e6e6e6;
+
+    text-decoration: underline;
+}
+
+.breadCrumbLink.disabled {
+    color: inherit;
+
+    text-decoration: none;
+
+    cursor: not-allowed;
+
+    opacity: 40%;
 }
 
 .breadcrumb-item + .breadcrumb-item::before {
@@ -279,13 +295,8 @@ a:hover {
     margin-right: 1rem;
 }
 
-.breadcrumb-item.active {
-    color: #e6e6e6;
-    text-decoration: underline;
-}
-
 @media (max-width: 768px) {
-    .recipeBreadcrumbItem {
+    .breadCrumbLink {
         font-size: 1rem;
     }
 

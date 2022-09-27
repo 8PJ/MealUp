@@ -25,9 +25,9 @@ function App() {
                     <Route path="login" element={<Login />} />
                     <Route path="register" element={<Register />} />
                     <Route path="recipes" element={<RecipeSectionSelection />}>
-                        <Route path="followedRecipes" element={<FollowedRecipes />} />
-                        <Route path="createdRecipes" element={<CreatedRecipes />} />
-                        <Route path="createNewRecipe" element={<CreateNewRecipe />} />
+                        <Route path="followed" element={<FollowedRecipes />} />
+                        <Route path="created" element={<CreatedRecipes />} />
+                        <Route path="createNew" element={<CreateNewRecipe />} />
                     </Route>
                     <Route path="mealPlan" element={<MealPlan />} />
                 </Routes>
