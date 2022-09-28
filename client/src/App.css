@@ -576,10 +576,23 @@ a:hover {
 }
 
 .recipeBoxFull {
-    margin-top: 1rem;
-    margin-bottom: 1rem;
-    padding: 1rem;
+    margin-top: 2rem;
+    margin-bottom: 10rem;
+    padding: 2rem;
+    padding-bottom: 3rem;
 
     border: 3px solid #e6e6e6;
     border-radius: 8px;
+}
+
+.recipeNameFull {
+    text-align: center;
+
+    font-size: 1.5rem;
+}
+
+.recipeIngredientsFull {
+    font-size: 1.1rem;
+
+    word-wrap: break-word;
 }
