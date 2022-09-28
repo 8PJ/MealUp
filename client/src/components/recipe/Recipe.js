@@ -1,5 +1,6 @@
 import Container from "react-bootstrap/esm/Container";
 import Button from "react-bootstrap/esm/Button";
+import { NavLink } from "react-router-dom";
 
 function Recipe(props) {
     return (
@@ -8,7 +9,7 @@ function Recipe(props) {
             <hr className="recipeDivider" />
             <Container className="recipeIngredients">
                 <ul>
-                    {props.ingredients.slice(0,3).map((ingredient, index) => (
+                    {props.ingredients.slice(0, 3).map((ingredient, index) => (
                         <li key={index}>{ingredient}</li>
                     ))}
                 </ul>
@@ -18,14 +19,16 @@ function Recipe(props) {
                 {props.description.slice(0, 100) + "..."}
             </Container>
             <Container className="d-flex justify-content-center">
-                <Button
-                    variant="outline-dark"
-                    type="button"
-                    className="recipeExpandButton"
-                    size="lg"
-                >
-                    Full Recipe
-                </Button>
+                <NavLink to={"../recipeInfo/1"}>
+                    <Button
+                        variant="outline-dark"
+                        type="button"
+                        className="recipeExpandButton"
+                        size="lg"
+                    >
+                        Full Recipe
+                    </Button>
+                </NavLink>
             </Container>
         </Container>
     );
