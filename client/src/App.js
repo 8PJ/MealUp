@@ -14,6 +14,7 @@ import CreatedRecipes from "./routes/recipes/CreatedRecipes";
 import CreateNewRecipe from "./routes/recipes/CreateNewRicpe";
 import MealPlan from "./routes/MealPlan";
 import RecipeSectionSelection from "./components/recipe/RecipeSectionSelection";
+import RecipeDetails from "./routes/recipes/RecipeDetails";
 
 function App() {
     return (
@@ -28,6 +29,7 @@ function App() {
                         <Route path="followed" element={<FollowedRecipes />} />
                         <Route path="created" element={<CreatedRecipes />} />
                         <Route path="createNew" element={<CreateNewRecipe />} />
+                        <Route path="recipeInfo/:id" element={<RecipeDetails />} />
                     </Route>
                     <Route path="mealPlan" element={<MealPlan />} />
                 </Routes>

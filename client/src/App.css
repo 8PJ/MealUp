@@ -375,6 +375,9 @@ a:hover {
     text-align: center;
 
     font-size: 1.5rem;
+
+    white-space: nowrap;
+    overflow: clip;
 }
 
 .recipeDivider {
@@ -387,6 +390,8 @@ a:hover {
 
 .recipeIngredients {
     font-size: 1.1rem;
+
+    overflow: clip;
 }
 
 .recipeExpandButton {
@@ -502,7 +507,7 @@ a:hover {
         margin-left: -6rem;
         margin-bottom: 7rem;
     }
-    
+
     .carousel-control-next {
         margin-right: -6rem;
         margin-bottom: 7rem;
@@ -520,7 +525,7 @@ a:hover {
         margin-left: -4rem;
         margin-bottom: 7rem;
     }
-    
+
     .carousel-control-next {
         margin-right: -4rem;
         margin-bottom: 7rem;
@@ -538,7 +543,7 @@ a:hover {
         margin-left: -3rem;
         margin-bottom: 7rem;
     }
-    
+
     .carousel-control-next {
         margin-right: -3rem;
         margin-bottom: 7rem;
@@ -554,9 +559,27 @@ a:hover {
         margin-left: -2.5rem;
         margin-bottom: 7rem;
     }
-    
+
     .carousel-control-next {
         margin-right: -2.5rem;
         margin-bottom: 7rem;
     }
+}
+
+/* Recipe Info */
+
+.recipeInfo {
+    margin-top: 2rem;
+
+    max-width: 50%;
+    min-width: 50%;
+}
+
+.recipeBoxFull {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    padding: 1rem;
+
+    border: 3px solid #e6e6e6;
+    border-radius: 8px;
 }

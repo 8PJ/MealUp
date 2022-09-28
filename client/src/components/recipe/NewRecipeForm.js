@@ -20,7 +20,7 @@ function NewRicpeForm(props) {
             }
         }
 
-        if (ingredientName.length > 0 && amount.length > 0) {
+        if (ingredientName.length > 0 && amount > 0) {
             const newIngredient = { name: ingredientName, amount, measurement };
             setIngredients((prev) => [...prev, newIngredient]);
             setIngredientName("");

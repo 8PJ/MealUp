@@ -8,14 +8,14 @@ function Recipe(props) {
             <hr className="recipeDivider" />
             <Container className="recipeIngredients">
                 <ul>
-                    {props.ingredients.map((ingredient, index) => (
+                    {props.ingredients.slice(0,3).map((ingredient, index) => (
                         <li key={index}>{ingredient}</li>
                     ))}
                 </ul>
             </Container>
             <hr className="recipeDivider" />
             <Container className="recipeDescription">
-                {props.description.slice(0, 99) + "..."}
+                {props.description.slice(0, 100) + "..."}
             </Container>
             <Container className="d-flex justify-content-center">
                 <Button
