@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -16,7 +17,21 @@ import MealPlan from "./routes/MealPlan";
 import RecipeSectionSelection from "./components/recipe/RecipeSectionSelection";
 import RecipeDetails from "./routes/recipes/RecipeDetails";
 
+import apiCalls from "./api/apiCalls";
+
 function App() {
+    useEffect(() => {
+        const getData = async () => {
+            try {
+                const data = await apiCalls.test();
+                console.log("result\n", data.data);
+            } catch (error) {
+                console.log(error);
+            }
+        };
+        getData();
+    }, []);
+
     return (
         <BrowserRouter>
             <div id="siteWrapper">

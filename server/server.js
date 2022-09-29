@@ -19,7 +19,7 @@ app.use(express.json());
 app.use(handleReqestSyntaxError);
 
 // root route for testing (will later serve react app)
-app.get("/", async (req, res) => {
+app.get("/api/v1/test", async (req, res) => {
     try {
         const result = await db.query(
             "SELECT * FROM app_user WHERE user_id=$1",
@@ -38,7 +38,7 @@ app.get("/", async (req, res) => {
 ////////////////////
 
 // Log in user
-app.post("/login", async (req, res, next) => {
+app.post("/api/v1/login", async (req, res, next) => {
     if (req.isAuthenticated()) {
         res.json({ message: "You are already logged in." });
         return;
@@ -68,7 +68,7 @@ app.post("/login", async (req, res, next) => {
 });
 
 // Log in user
-app.post("/logout", async (req, res, next) => {
+app.post("/api/v1/logout", async (req, res, next) => {
     if (!req.isAuthenticated()) {
         res.json({ message: "You are not logged in." });
         return;
