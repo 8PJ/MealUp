@@ -218,7 +218,7 @@ a:hover {
 /* Input form */
 
 #inputFormContainer {
-    margin-top: 8rem;
+    margin-top: 4rem;
     margin-bottom: 8rem;
     padding: 3rem;
 
@@ -229,6 +229,14 @@ a:hover {
 
     max-width: 30%;
     min-width: 30%;
+}
+
+.form-control.is-invalid {
+    border-width: 3px;
+}
+
+.invalid-feedback {
+    color: #670312;
 }
 
 @media (max-width: 1200px) {

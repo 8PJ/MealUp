@@ -1,23 +1,22 @@
 import axios from "axios";
 
-const axiosInstance = axios.create();
+const axiosInstance = axios.create({ baseURL: "/api/v1" });
 
 const apiCalls = {
     test: async () => {
         try {
-            const testResult = await axiosInstance.get("/api/v1/test");
-            console.log("returning", testResult.data);
+            const testResult = await axiosInstance.get("/test");
 
-            return testResult
+            return testResult;
         } catch (error) {
             console.log(error);
-            return null
+            return null;
         }
     },
 
     createUser: async (username, email, password) => {
         try {
-            const newUser = await axiosInstance.post("users", {
+            const newUser = await axiosInstance.post("/users", {
                 username,
                 email,
                 password

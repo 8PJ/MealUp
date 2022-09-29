@@ -20,18 +20,6 @@ import RecipeDetails from "./routes/recipes/RecipeDetails";
 import apiCalls from "./api/apiCalls";
 
 function App() {
-    useEffect(() => {
-        const getData = async () => {
-            try {
-                const data = await apiCalls.test();
-                console.log("result\n", data.data);
-            } catch (error) {
-                console.log(error);
-            }
-        };
-        getData();
-    }, []);
-
     return (
         <BrowserRouter>
             <div id="siteWrapper">

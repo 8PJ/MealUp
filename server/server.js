@@ -25,7 +25,7 @@ app.get("/api/v1/test", async (req, res) => {
             "SELECT * FROM app_user WHERE user_id=$1",
             [1]
         );
-        console.log(result.rows);
+        // console.log(result.rows);
         res.json({message: "it's working"});
     } catch (error) {
         console.log(error);
