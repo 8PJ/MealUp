@@ -2,6 +2,19 @@ import axios from "axios";
 
 const axiosInstance = axios.create({ baseURL: "/api/v1" });
 
+// if user is not authenticated, refreshes a page (used in api requests requiring authentication)
+const isAuthenticated = async () => {
+    try {
+        const response = await axiosInstance.get("/loginStatus");
+
+        if (!response.data.loggedIn) {
+            window.location.reload();
+        }
+    } catch (error) {
+        console.log(error);
+    }
+};
+
 const apiCalls = {
     test: async () => {
         try {
@@ -36,7 +49,18 @@ const apiCalls = {
                 password
             });
 
-            return {success: true, response}
+            return { success: true, response };
+        } catch (error) {
+            console.log(error);
+            return { success: false, response: error };
+        }
+    },
+
+    loginStatus: async () => {
+        try {
+            const response = await axiosInstance.get("/loginStatus");
+
+            return { success: true, response };
         } catch (error) {
             console.log(error);
             return { success: false, response: error };

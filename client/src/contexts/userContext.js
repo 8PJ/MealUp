@@ -3,19 +3,22 @@ import { createContext, useState } from "react";
 const UserContext = createContext();
 
 function UserContextProvider(props) {
-    const [contextUsername, setContextUsername] = useState();
-    const [contextEmail, setContextEmail] = useState();
-    const [contextUserID, setContextUserID] = useState();
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [authUsername, setAuthUsername] = useState();
+    const [authEmail, setAuthEmail] = useState();
+    const [authUserID, setAuthUserID] = useState();
 
     return (
         <UserContext.Provider
             value={{
-                contextUsername,
-                setContextUsername,
-                contextEmail,
-                setContextEmail,
-                contextUserID,
-                setContextUserID
+                isLoggedIn,
+                setIsLoggedIn,
+                authUsername,
+                setAuthUsername,
+                authEmail,
+                setAuthEmail,
+                authUserID,
+                setAuthUserID
             }}
         >
             {props.children}
