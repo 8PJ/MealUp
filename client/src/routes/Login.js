@@ -1,20 +1,60 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 import Container from "react-bootstrap/Container";
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
 
+import apiCalls from "../api/apiCalls";
+
 function Login(props) {
+    const navigate = useNavigate();
+
+    const [errorMessage, setErrorMessage] = useState("");
+
+    const [username, setUsername] = useState("");
+
+    const [password, setPassword] = useState("");
+
+    const handleSubmit = async event => {
+        event.preventDefault();
+        setErrorMessage("");
+
+        const { success, response } = await apiCalls.loginUser(username, password);
+
+        if (success) {
+            console.log(response.data);
+            navigate("../recipes");
+        } else {
+            setErrorMessage("Error: " + response.response.data.message);
+        }
+    };
+
     return (
         <Container id="inputFormContainer">
             <h1>Login</h1>
-            <Form>
+            <p className="formErrorMessage">{errorMessage}</p>
+            <Form onSubmit={handleSubmit}>
                 <Form.Group className="mb-3" controlId="formBasicUsername">
                     <Form.Label>Username</Form.Label>
-                    <Form.Control type="text" placeholder="Username" />
+                    <Form.Control
+                        required
+                        type="text"
+                        placeholder="Username"
+                        value={username}
+                        onChange={e => setUsername(e.target.value)}
+                    />
                 </Form.Group>
 
                 <Form.Group className="mb-4" controlId="formBasicPassword">
                     <Form.Label>Password</Form.Label>
-                    <Form.Control type="password" placeholder="Password" />
+                    <Form.Control
+                        required
+                        type="password"
+                        placeholder="Password"
+                        value={password}
+                        onChange={e => setPassword(e.target.value)}
+                    />
                 </Form.Group>
                 <Button variant="outline-dark" type="submit">
                     Submit

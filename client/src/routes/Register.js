@@ -23,19 +23,20 @@ function Register(props) {
     const [isInvalidPassword, setIsInvalidPassword] = useState();
 
     const createNewUserRedirect = async () => {
-        const {success, newUser} = await apiCalls.createUser(username, email, password);
+        const { success, response } = await apiCalls.createUser(username, email, password);
 
         if (success) {
-            console.log(newUser.data);
-            navigate("../recipes")
-        }
-        else {
-            setErrorMessage("Error: " + newUser.response.data.message)
+            navigate("../recipes");
+        } else {
+            setErrorMessage("Error: " + response.response.data.message);
         }
     };
 
     const handleSubmit = event => {
         event.preventDefault();
+
+        // clear server error message
+        setErrorMessage("");
 
         let valid = true;
 

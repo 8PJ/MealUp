@@ -16,16 +16,30 @@ const apiCalls = {
 
     createUser: async (username, email, password) => {
         try {
-            const newUser = await axiosInstance.post("/users", {
+            const response = await axiosInstance.post("/users", {
                 username,
                 email,
                 password
             });
 
-            return {success: true, newUser};
+            return { success: true, response };
         } catch (error) {
             console.log(error);
-            return {success: false, newUser: error}
+            return { success: false, response: error };
+        }
+    },
+
+    loginUser: async (username, password) => {
+        try {
+            const response = await axiosInstance.post("/login", {
+                username,
+                password
+            });
+
+            return {success: true, response}
+        } catch (error) {
+            console.log(error);
+            return { success: false, response: error };
         }
     }
 };
