@@ -23,7 +23,6 @@ function Login(props) {
         const { success, response } = await apiCalls.loginUser(username, password);
 
         if (success) {
-            console.log(response.data);
             navigate("../recipes");
         } else {
             setErrorMessage("Error: " + response.response.data.message);
