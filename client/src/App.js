@@ -1,5 +1,7 @@
-import { useEffect } from "react";
+import { useContext, useEffect } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+
+import { UserContext, UserContextProvider } from "./contexts/userContext";
 
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
@@ -21,24 +23,26 @@ import apiCalls from "./api/apiCalls";
 
 function App() {
     return (
-        <BrowserRouter>
-            <div id="siteWrapper">
-                <NavbarComp />
-                <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="login" element={<Login />} />
-                    <Route path="register" element={<Register />} />
-                    <Route path="recipes" element={<RecipeSectionSelection />}>
-                        <Route path="followed" element={<FollowedRecipes />} />
-                        <Route path="created" element={<CreatedRecipes />} />
-                        <Route path="createNew" element={<CreateNewRecipe />} />
-                        <Route path="recipeInfo/:id" element={<RecipeDetails />} />
-                    </Route>
-                    <Route path="mealPlan" element={<MealPlan />} />
-                </Routes>
-            </div>
-            <FooterComp />
-        </BrowserRouter>
+        <UserContextProvider>
+            <BrowserRouter>
+                <div id="siteWrapper">
+                    <NavbarComp />
+                    <Routes>
+                        <Route path="/" element={<Home />} />
+                        <Route path="login" element={<Login />} />
+                        <Route path="register" element={<Register />} />
+                        <Route path="recipes" element={<RecipeSectionSelection />}>
+                            <Route path="followed" element={<FollowedRecipes />} />
+                            <Route path="created" element={<CreatedRecipes />} />
+                            <Route path="createNew" element={<CreateNewRecipe />} />
+                            <Route path="recipeInfo/:id" element={<RecipeDetails />} />
+                        </Route>
+                        <Route path="mealPlan" element={<MealPlan />} />
+                    </Routes>
+                </div>
+                <FooterComp />
+            </BrowserRouter>
+        </UserContextProvider>
     );
 }
 
