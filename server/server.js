@@ -34,6 +34,16 @@ app.get("/api/v1/test", async (req, res) => {
 // non API routes //
 ////////////////////
 
+// Check if user is logged in
+app.get("/api/v1/loginStatus", (req, res) => {
+    if (req.isAuthenticated()) {
+        const { email, userID: user_id, username } = req.user;
+        res.json({ loggedIn: true, user: { email, user_id, username } });
+    } else {
+        res.json({ loggedIn: false });
+    }
+});
+
 // Log in user
 app.post("/api/v1/login", async (req, res, next) => {
     if (req.isAuthenticated()) {
