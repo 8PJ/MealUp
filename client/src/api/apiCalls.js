@@ -22,10 +22,10 @@ const apiCalls = {
                 password
             });
 
-            return newUser;
+            return {success: true, newUser};
         } catch (error) {
             console.log(error);
-            return null;
+            return {success: false, newUser: error}
         }
     }
 };

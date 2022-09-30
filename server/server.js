@@ -327,7 +327,7 @@ app.post("/api/v1/users", async (req, res) => {
         const queryString = "SELECT * FROM app_user WHERE username=$1";
 
         if (await existsInDB(queryString, [username])) {
-            res.status(400).json({ message: "Username already used." });
+            res.status(400).json({ message: "Username already taken." });
             return;
         }
     } catch (error) {

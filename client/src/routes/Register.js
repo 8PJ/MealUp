@@ -10,6 +10,8 @@ import apiCalls from "../api/apiCalls";
 function Register(props) {
     const navigate = useNavigate();
 
+    const [errorMessage, setErrorMessage] = useState("");
+
     // validities are only set after submit and can be set to true on change (not to false)
     const [username, setUsername] = useState("");
     const [isInvalidUsername, setIsInvalidUsername] = useState();
@@ -21,11 +23,15 @@ function Register(props) {
     const [isInvalidPassword, setIsInvalidPassword] = useState();
 
     const createNewUserRedirect = async () => {
-        console.log("Creating new user");
-        const newUser = await apiCalls.createUser(username, email, password);
-        console.log("Created a new user");
-        console.log(newUser.data);
-        navigate("../recipes")
+        const {success, newUser} = await apiCalls.createUser(username, email, password);
+
+        if (success) {
+            console.log(newUser.data);
+            navigate("../recipes")
+        }
+        else {
+            setErrorMessage("Error: " + newUser.response.data.message)
+        }
     };
 
     const handleSubmit = event => {
@@ -81,6 +87,7 @@ function Register(props) {
     return (
         <Container id="inputFormContainer">
             <h1>Register</h1>
+            <p className="formErrorMessage">{errorMessage}</p>
             <Form noValidate onSubmit={handleSubmit}>
                 <Form.Group className="mb-3" controlId="formBasicUsername">
                     <Form.Label>Username</Form.Label>

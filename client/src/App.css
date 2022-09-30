@@ -239,6 +239,12 @@ a:hover {
     color: #670312;
 }
 
+.formErrorMessage {
+    color: #670312;
+
+    font-size: 1.1rem;
+}
+
 @media (max-width: 1200px) {
     #inputFormContainer {
         max-width: 40%;
