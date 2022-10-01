@@ -2,16 +2,14 @@ import axios from "axios";
 
 const axiosInstance = axios.create({ baseURL: "/api/v1" });
 
-// if user is not authenticated, refreshes a page (used in api requests requiring authentication)
-const isAuthenticated = async () => {
-    try {
-        const response = await axiosInstance.get("/loginStatus");
-
-        if (!response.data.loggedIn) {
-            window.location.reload();
+// if server response indicates use is not authenticated, refresh the page
+const isUnauthenticated = errorResponse => {
+    if (errorResponse.response.status === 401) {
+        if (errorResponse.response.data.message === "You are not logged in.") {
+            setTimeout(() => {
+                window.location.reload();
+            }, 5000);
         }
-    } catch (error) {
-        console.log(error);
     }
 };
 
@@ -23,7 +21,7 @@ const apiCalls = {
             return testResult;
         } catch (error) {
             console.log(error);
-            return null;
+            return error;
         }
     },
 

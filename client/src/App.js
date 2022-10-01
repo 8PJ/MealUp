@@ -29,7 +29,6 @@ function App() {
             const { success, response } = await apiCalls.loginStatus();
 
             if (success) {
-                console.log(response);
                 // if user is logged in, set their details in user context
                 if (response.data.loggedIn) {
                     const { setIsLoggedIn, setAuthUsername, setAuthEmail, setAuthUserID } =

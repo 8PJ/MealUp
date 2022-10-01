@@ -52,7 +52,7 @@ app.post("/api/v1/login", async (req, res, next) => {
         return;
     }
 
-    // authenticate a user usning local passport strategy
+    // authenticate a user using local passport strategy
     passport.authenticate("local", (error, user, info) => {
         if (error) {
             console.log(error);
