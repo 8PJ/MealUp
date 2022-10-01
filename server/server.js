@@ -879,8 +879,8 @@ app.post("/api/v1/recipes", checkAuthenticated, async (req, res) => {
         return;
     }
 
-    // check if recipe_instructions only contains letters, numbers and the following symbols: ! "#$%&'()*+,-./:;<=>?@[\]^_{|}~
-    if (!/^[ -~]*$/.test(recipe_instructions)) {
+    // check if recipe_instructions only contains letters, numbers, new line and the following symbols: ! "#$%&'()*+,-./:;<=>?@[\]^_{|}~
+    if (!/^[ -~|\n]*$/.test(recipe_instructions)) {
         res.status(400).json({
             message:
                 "Recipe instructions must only contain letters, numbers and the following symbols: ! \"#$%&'()*+,-./:;<=>?@[\\]^_{|}~"

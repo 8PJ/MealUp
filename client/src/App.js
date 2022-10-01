@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef } from "react";
+import { useContext, useEffect } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 import { UserContext } from "./contexts/userContext";
@@ -22,7 +22,7 @@ import RecipeDetails from "./routes/recipes/RecipeDetails";
 import apiCalls from "./api/apiCalls";
 
 function App() {
-    const userContextRef = useRef(useContext(UserContext));
+    const userContext = useContext(UserContext);
 
     useEffect(() => {
         const getLoginStatus = async () => {
@@ -31,8 +31,12 @@ function App() {
             if (success) {
                 // if user is logged in, set their details in user context
                 if (response.data.loggedIn) {
-                    const { setIsLoggedIn, setAuthUsername, setAuthEmail, setAuthUserID } =
-                        userContextRef.current;
+                    const {
+                        setIsLoggedIn,
+                        setAuthUsername,
+                        setAuthEmail,
+                        setAuthUserID
+                    } = userContext;
 
                     const { email, user_id, username } = response.data.user;
 
@@ -47,7 +51,7 @@ function App() {
         };
 
         getLoginStatus();
-    }, []);
+    }, [userContext]);
 
     return (
         <BrowserRouter>
@@ -57,13 +61,15 @@ function App() {
                     <Route path="/" element={<Home />} />
                     <Route path="login" element={<Login />} />
                     <Route path="register" element={<Register />} />
-                    <Route path="recipes" element={<RecipeSectionSelection />}>
-                        <Route path="followed" element={<FollowedRecipes />} />
-                        <Route path="created" element={<CreatedRecipes />} />
-                        <Route path="createNew" element={<CreateNewRecipe />} />
-                        <Route path="recipeInfo/:id" element={<RecipeDetails />} />
-                    </Route>
-                    <Route path="mealPlan" element={<MealPlan />} />
+                    {userContext.isLoggedIn ? (
+                        <Route path="recipes" element={<RecipeSectionSelection />}>
+                            <Route path="followed" element={<FollowedRecipes />} />
+                            <Route path="created" element={<CreatedRecipes />} />
+                            <Route path="createNew" element={<CreateNewRecipe />} />
+                            <Route path="recipeInfo/:id" element={<RecipeDetails />} />
+                        </Route>
+                    ) : null}
+                    {userContext.isLoggedIn && <Route path="mealPlan" element={<MealPlan />} />}
                 </Routes>
             </div>
             <FooterComp />

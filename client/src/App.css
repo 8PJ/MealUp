@@ -373,6 +373,10 @@ a:hover {
     border-radius: 8px;
 }
 
+.recipeCol {
+    display: flex;
+}
+
 @media (min-width: 1200px) {
     .recipeWall .col-xl-3 {
         width: calc(100% / 3);
@@ -406,6 +410,16 @@ a:hover {
     font-size: 1.1rem;
 
     overflow: clip;
+
+    min-height: 3.5rem;
+}
+
+.recipeDescription {
+    white-space: nowrap;
+    overflow: clip;
+
+    min-height: 2rem;
+    max-height: 2rem;
 }
 
 .recipeExpandButton {

@@ -24,6 +24,8 @@ const apiCalls = {
             return error;
         }
     },
+    
+    // Authentication
 
     createUser: async (username, email, password) => {
         try {
@@ -57,6 +59,44 @@ const apiCalls = {
     loginStatus: async () => {
         try {
             const response = await axiosInstance.get("/loginStatus");
+
+            return { success: true, response };
+        } catch (error) {
+            console.log(error);
+
+            isUnauthenticated(error);
+
+            return { success: false, response: error };
+        }
+    },
+
+    // Recipes
+
+    createdRecipes: async (userID) => {
+        try {
+            const response = await axiosInstance.get(`/users/${userID}/createdRecipes`);
+
+            return { success: true, response };
+        } catch (error) {
+            console.log(error);
+            return { success: false, response: error };
+        }
+    },
+
+    followedRecipes: async (userID) => {
+        try {
+            const response = await axiosInstance.get(`/users/${userID}/followedRecipes`);
+
+            return { success: true, response };
+        } catch (error) {
+            console.log(error);
+            return { success: false, response: error };
+        }
+    },
+
+    recipeIngredients: async (recipeID) => {
+        try {
+            const response = await axiosInstance.get(`/recipes/${recipeID}/recipeIngredients`);
 
             return { success: true, response };
         } catch (error) {
