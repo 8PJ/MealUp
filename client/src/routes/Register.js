@@ -1,5 +1,7 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+
+import { UserContext } from "../contexts/userContext";
 
 import Container from "react-bootstrap/Container";
 import Form from "react-bootstrap/Form";
@@ -8,6 +10,8 @@ import Button from "react-bootstrap/Button";
 import apiCalls from "../api/apiCalls";
 
 function Register(props) {
+    const userContext = useContext(UserContext);
+
     const navigate = useNavigate();
 
     const [errorMessage, setErrorMessage] = useState("");
@@ -26,6 +30,15 @@ function Register(props) {
         const { success, response } = await apiCalls.createUser(username, email, password);
 
         if (success) {
+            const { setIsLoggedIn, setAuthUsername, setAuthEmail, setAuthUserID } = userContext;
+
+            const { user_id, username, email } = response.data;
+
+            setIsLoggedIn(true);
+            setAuthUsername(username);
+            setAuthEmail(email);
+            setAuthUserID(user_id);
+            
             navigate("../recipes");
         } else {
             setErrorMessage("Error: " + response.response.data.message);
