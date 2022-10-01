@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
+
+import { UserContext } from "../contexts/userContext";
 
 import Container from "react-bootstrap/Container";
 import Form from "react-bootstrap/Form";
@@ -8,6 +10,8 @@ import Button from "react-bootstrap/Button";
 import apiCalls from "../api/apiCalls";
 
 function Login(props) {
+    const userContext = useContext(UserContext);
+
     const navigate = useNavigate();
 
     const [errorMessage, setErrorMessage] = useState("");
@@ -23,6 +27,15 @@ function Login(props) {
         const { success, response } = await apiCalls.loginUser(username, password);
 
         if (success) {
+            const { setIsLoggedIn, setAuthUsername, setAuthEmail, setAuthUserID } = userContext;
+
+            const { email, user_id, username } = response.data.user;
+
+            setIsLoggedIn(true);
+            setAuthUsername(username);
+            setAuthEmail(email);
+            setAuthUserID(user_id);
+
             navigate("../recipes");
         } else {
             setErrorMessage("Error: " + response.response.data.message);
