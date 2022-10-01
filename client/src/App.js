@@ -31,12 +31,8 @@ function App() {
             if (success) {
                 // if user is logged in, set their details in user context
                 if (response.data.loggedIn) {
-                    const {
-                        setIsLoggedIn,
-                        setAuthUsername,
-                        setAuthEmail,
-                        setAuthUserID
-                    } = userContext;
+                    const { setIsLoggedIn, setAuthUsername, setAuthEmail, setAuthUserID } =
+                        userContext;
 
                     const { email, user_id, username } = response.data.user;
 
@@ -59,8 +55,8 @@ function App() {
                 <NavbarComp />
                 <Routes>
                     <Route path="/" element={<Home />} />
-                    <Route path="login" element={<Login />} />
-                    <Route path="register" element={<Register />} />
+                    {!userContext.isLoggedIn && <Route path="login" element={<Login />} />}
+                    {!userContext.isLoggedIn && <Route path="register" element={<Register />} />}
                     {userContext.isLoggedIn ? (
                         <Route path="recipes" element={<RecipeSectionSelection />}>
                             <Route path="followed" element={<FollowedRecipes />} />
