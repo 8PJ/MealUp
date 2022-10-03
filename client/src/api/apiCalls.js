@@ -110,6 +110,38 @@ const apiCalls = {
 
             return { success: false, response: error };
         }
+    },
+
+    // Ingredients
+
+    ingredientByName: async ingredientName => {
+        try {
+            const response = await axiosInstance.get(`/ingredients/find?name=${ingredientName}`);
+
+            return { success: true, response };
+        } catch (error) {
+            console.log(error);
+
+            isUnauthenticated(error);
+
+            return { success: false, response: error };
+        }
+    },
+
+    createNewIngredient: async ingredientName => {
+        try {
+            const response = await axiosInstance.post("/ingredients", {
+                ingredient_name: ingredientName
+            });
+
+            return { success: true, response };
+        } catch (error) {
+            console.log(error);
+
+            isUnauthenticated(error);
+
+            return { success: false, response: error };
+        }
     }
 };
 

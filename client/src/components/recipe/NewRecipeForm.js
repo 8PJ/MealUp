@@ -5,7 +5,11 @@ import Form from "react-bootstrap/esm/Form";
 import Button from "react-bootstrap/esm/Button";
 import InputGroup from "react-bootstrap/InputGroup";
 
+import apiCalls from "../../api/apiCalls";
+
 function NewRicpeForm(props) {
+    const [errorMessage, setErrorMessage] = useState("");
+
     const [ingredients, setIngredients] = useState([]);
 
     const [ingredientName, setIngredientName] = useState("");
@@ -13,7 +17,7 @@ function NewRicpeForm(props) {
     const [measurement, setMeasurement] = useState("kg");
     const [amount, setAmount] = useState(1);
 
-    const addIngredientToList = () => {
+    const addIngredientToList = async () => {
         // check if ingredient doesn't already exist
         for (const ingredient of ingredients) {
             if (ingredient.name === ingredientName) {
@@ -22,10 +26,39 @@ function NewRicpeForm(props) {
         }
 
         if (ingredientName.length > 0 && amount > 0) {
-            const newIngredient = { name: ingredientName, amount, measurement };
-            setIngredients(prev => [...prev, newIngredient]);
+            const { success, response } = await apiCalls.ingredientByName(ingredientName);
+
+            // if ingredient already exists in DB retrive it, else create a new one
+            if (success) {
+                const { ingredient_name, ingredient_id } = response.data;
+
+                const newIngredient = {
+                    id: ingredient_id,
+                    name: ingredient_name,
+                    amount,
+                    measurement
+                };
+                setIngredients(prev => [...prev, newIngredient]);
+            } else {
+                const { success, response } = await apiCalls.createNewIngredient(ingredientName);
+
+                if (success) {
+                    const { ingredient_name, ingredient_id } = response.data;
+
+                    const newIngredient = {
+                        id: ingredient_id,
+                        name: ingredient_name,
+                        amount,
+                        measurement
+                    };
+                    setIngredients(prev => [...prev, newIngredient]);
+                } else {
+                    setErrorMessage("Error: " + response.response.data.message);
+                }
+            }
+
             setIngredientName("");
-            setAmount("");
+            setAmount("1");
             setMeasurement("kg");
         }
     };
@@ -33,6 +66,7 @@ function NewRicpeForm(props) {
     return (
         <Container id="inputFormContainer">
             <h1>Create new Recipe</h1>
+            <p className="formErrorMessage">{errorMessage}</p>
             <Form>
                 {/* Recipe name input */}
                 <Form.Group className="mb-3" controlId="formBasicRecipename">
