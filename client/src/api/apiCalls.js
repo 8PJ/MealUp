@@ -6,9 +6,7 @@ const axiosInstance = axios.create({ baseURL: "/api/v1" });
 const isUnauthenticated = errorResponse => {
     if (errorResponse.response.status === 401) {
         if (errorResponse.response.data.message === "You are not logged in.") {
-            setTimeout(() => {
-                window.location.reload();
-            }, 5000);
+            window.location.reload();
         }
     }
 };
@@ -24,7 +22,7 @@ const apiCalls = {
             return error;
         }
     },
-    
+
     // Authentication
 
     createUser: async (username, email, password) => {
@@ -72,35 +70,44 @@ const apiCalls = {
 
     // Recipes
 
-    createdRecipes: async (userID) => {
+    createdRecipes: async userID => {
         try {
             const response = await axiosInstance.get(`/users/${userID}/createdRecipes`);
 
             return { success: true, response };
         } catch (error) {
             console.log(error);
+
+            isUnauthenticated(error);
+
             return { success: false, response: error };
         }
     },
 
-    followedRecipes: async (userID) => {
+    followedRecipes: async userID => {
         try {
             const response = await axiosInstance.get(`/users/${userID}/followedRecipes`);
 
             return { success: true, response };
         } catch (error) {
             console.log(error);
+
+            isUnauthenticated(error);
+
             return { success: false, response: error };
         }
     },
 
-    recipeIngredients: async (recipeID) => {
+    recipeIngredients: async recipeID => {
         try {
             const response = await axiosInstance.get(`/recipes/${recipeID}/recipeIngredients`);
 
             return { success: true, response };
         } catch (error) {
             console.log(error);
+
+            isUnauthenticated(error);
+
             return { success: false, response: error };
         }
     }
