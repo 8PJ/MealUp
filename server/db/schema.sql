@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS ingredient (
 CREATE TABLE IF NOT EXISTS recipe_ingredient (
     recipe_id BIGINT REFERENCES recipe (recipe_id) ON DELETE CASCADE NOT NULL,
     ingredient_id BIGINT REFERENCES ingredient (ingredient_id) NOT NULL,
-    amount INTEGER NOT NULL,
+    amount REAL NOT NULL,
     measurement VARCHAR(30) NOT NULL,
     PRIMARY KEY (recipe_id, ingredient_id)
 );

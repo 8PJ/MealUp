@@ -112,6 +112,42 @@ const apiCalls = {
         }
     },
 
+    createRecipe: async (recipeName, creatorID, recipeInstructions) => {
+        try {
+            const response = await axiosInstance.post("/recipes", {
+                recipe_name: recipeName,
+                creator_id: creatorID,
+                recipe_instructions: recipeInstructions
+            });
+
+            return { success: true, response };
+        } catch (error) {
+            console.log(error);
+
+            isUnauthenticated(error);
+
+            return { success: false, response: error };
+        }
+    },
+
+    addIngredientToRecipe: async (ingredientID, amount, measurement, recipeID) => {
+        try {
+            const response = await axiosInstance.post(`/recipes/${recipeID}/recipeIngredients`, {
+                ingredient_id: ingredientID,
+                amount,
+                measurement
+            });
+
+            return { success: true, response };
+        } catch (error) {
+            console.log(error);
+
+            isUnauthenticated(error);
+
+            return { success: false, response: error };
+        }
+    },
+
     // Ingredients
 
     ingredientByName: async ingredientName => {
@@ -128,7 +164,7 @@ const apiCalls = {
         }
     },
 
-    createNewIngredient: async ingredientName => {
+    createIngredient: async ingredientName => {
         try {
             const response = await axiosInstance.post("/ingredients", {
                 ingredient_name: ingredientName

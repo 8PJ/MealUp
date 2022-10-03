@@ -1,4 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
+import { useNavigate } from "react-router-dom";
+
+import { UserContext } from "../../contexts/userContext";
 
 import Container from "react-bootstrap/esm/Container";
 import Form from "react-bootstrap/esm/Form";
@@ -8,6 +11,10 @@ import InputGroup from "react-bootstrap/InputGroup";
 import apiCalls from "../../api/apiCalls";
 
 function NewRicpeForm(props) {
+    const navigate = useNavigate();
+
+    const userContext = useContext(UserContext);
+
     const [errorMessage, setErrorMessage] = useState("");
 
     const [ingredients, setIngredients] = useState([]);
@@ -81,7 +88,7 @@ function NewRicpeForm(props) {
             };
             setIngredients(prev => [...prev, newIngredient]);
         } else {
-            const { success, response } = await apiCalls.createNewIngredient(ingredientName);
+            const { success, response } = await apiCalls.createIngredient(ingredientName);
 
             if (success) {
                 const { ingredient_name, ingredient_id } = response.data;
@@ -103,8 +110,27 @@ function NewRicpeForm(props) {
         setMeasurement("kg");
     };
 
-    const createNewRecipe = () => {
-        // TODO
+    const createNewRecipe = async () => {
+        const { authUserID } = userContext;
+        const { success, response } = await apiCalls.createRecipe(
+            recipeName,
+            authUserID,
+            instructions
+        );
+
+        const recipeID = response.data.recipe_id;
+
+        // if recipe creation was successful, add all ingredients to the recipe
+        if (success) {
+            for (const ingredient of ingredients) {
+                const { id, amount, measurement } = ingredient;
+                apiCalls.addIngredientToRecipe(id, amount, measurement, recipeID);
+            }
+        } else {
+            setErrorMessage("Error: " + response.response.data.message);
+        }
+
+        navigate("../created");
     };
 
     const handleSubmit = event => {
@@ -114,6 +140,12 @@ function NewRicpeForm(props) {
         setErrorMessage("");
 
         let valid = true;
+
+        // check if there is at least one ingredient
+        if (ingredients.length < 1) {
+            setErrorMessage("Error: must add at least one ingredient.")
+            valid = false
+        }
 
         // chech if recipe name of letters, numbers and ! \"#$%&'()*+,-./:;<=>?@[\\]^_{|}~ at least 3 and at most 100 characters long
         if (!/^[ -~]*$/.test(recipeName) || recipeName.length < 3 || recipeName.length > 100) {
