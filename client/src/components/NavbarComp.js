@@ -23,20 +23,19 @@ function NavbarComp(props) {
                 >
                     <Nav>
                         <Nav.Link
-                            eventKey="1"
                             as={NavLink}
                             className="navLink"
                             to={userContext.isLoggedIn ? "recipes" : "register"}
                         >
                             {userContext.isLoggedIn ? "Recipes" : "Register"}
                         </Nav.Link>
+
                         <Nav.Link
-                            eventKey="2"
                             as={NavLink}
                             className="navLink"
                             to={userContext.isLoggedIn ? "mealPlan" : "login"}
                         >
-                            {userContext.isLoggedIn ? "MealPlan" : "Login"}
+                            {userContext.isLoggedIn ? "Meal Plan" : "Login"}
                         </Nav.Link>
                     </Nav>
                 </Navbar.Collapse>
