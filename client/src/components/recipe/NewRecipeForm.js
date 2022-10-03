@@ -6,8 +6,9 @@ import Button from "react-bootstrap/esm/Button";
 import InputGroup from "react-bootstrap/InputGroup";
 
 function NewRicpeForm(props) {
-    const [ingredientName, setIngredientName] = useState("");
     const [ingredients, setIngredients] = useState([]);
+
+    const [ingredientName, setIngredientName] = useState("");
 
     const [measurement, setMeasurement] = useState("kg");
     const [amount, setAmount] = useState(1);
@@ -22,7 +23,7 @@ function NewRicpeForm(props) {
 
         if (ingredientName.length > 0 && amount > 0) {
             const newIngredient = { name: ingredientName, amount, measurement };
-            setIngredients((prev) => [...prev, newIngredient]);
+            setIngredients(prev => [...prev, newIngredient]);
             setIngredientName("");
             setAmount("");
             setMeasurement("kg");
@@ -47,7 +48,7 @@ function NewRicpeForm(props) {
                             type="text"
                             value={ingredientName}
                             placeholder="Ingredient Name"
-                            onChange={(e) => setIngredientName(e.target.value)}
+                            onChange={e => setIngredientName(e.target.value)}
                         />
                         <Form.Control
                             className="newRecipeFormSubfield"
@@ -55,12 +56,12 @@ function NewRicpeForm(props) {
                             placeholder="0"
                             min={1}
                             value={amount}
-                            onChange={(e) => setAmount(e.target.value)}
+                            onChange={e => setAmount(e.target.value)}
                         />
                         <Form.Select
                             className="newRecipeFormSubfield"
                             value={measurement}
-                            onChange={(e) => setMeasurement(e.target.value)}
+                            onChange={e => setMeasurement(e.target.value)}
                         >
                             <option>x</option>
                             <option>kg</option>
@@ -83,7 +84,7 @@ function NewRicpeForm(props) {
                 {/* List of added ingredients */}
                 <Container className="NewRecipeIngredientList">
                     <ul>
-                        {ingredients.map((ingredient) => {
+                        {ingredients.map(ingredient => {
                             const { name, amount, measurement } = ingredient;
                             return <li key={name}>{`${amount}${measurement} ${name}`}</li>;
                         })}

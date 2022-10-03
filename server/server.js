@@ -1266,6 +1266,34 @@ app.get("/api/v1/ingredients", checkAuthenticated, async (req, res) => {
     }
 });
 
+// Get specific ingredient by name
+app.get("/api/v1/ingredients/find", checkAuthenticated, async (req, res) => {
+    const { name: ingredientName } = req.query;
+
+    if (!isDefined(ingredientName)) {
+        res.status(400).json({ message: "Must provide a valid ingredient name." });
+        return;
+    }
+
+    try {
+        const result = await db.query(
+            `SELECT ingredient_id, ingredient_name
+             FROM ingredient
+             WHERE ingredient_name=$1`,
+            [ingredientName]
+        );
+
+        if (result.rowCount === 0) {
+            res.status(404).json({ message: "Ingredient not found." });
+        } else {
+            res.json(result.rows[0]);
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Server error." });
+    }
+});
+
 // Get specific ingredient by id
 app.get("/api/v1/ingredients/:ingredientID", checkAuthenticated, async (req, res) => {
     const { ingredientID } = req.params;
@@ -1281,34 +1309,6 @@ app.get("/api/v1/ingredients/:ingredientID", checkAuthenticated, async (req, res
              FROM ingredient
              WHERE ingredient_id=$1`,
             [ingredientID]
-        );
-
-        if (result.rowCount === 0) {
-            res.status(404).json({ message: "Ingredient not found." });
-        } else {
-            res.json(result.rows[0]);
-        }
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: "Server error." });
-    }
-});
-
-// Get specific ingredient by name
-app.get("/api/v1/ingredients/find", checkAuthenticated, async (req, res) => {
-    const { name: ingredientName } = req.query.name;
-
-    if (!isDefined(ingredientName)) {
-        res.status(400).json({ message: "Must provide a valid ingredient name." });
-        return;
-    }
-
-    try {
-        const result = await db.query(
-            `SELECT ingredient_id, ingredient_name
-             FROM ingredient
-             WHERE ingredient_name=$1`,
-            [ingredientName]
         );
 
         if (result.rowCount === 0) {
