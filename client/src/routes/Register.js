@@ -38,7 +38,7 @@ function Register(props) {
             setAuthUsername(username);
             setAuthEmail(email);
             setAuthUserID(user_id);
-            
+
             navigate("../recipes");
         } else {
             setErrorMessage("Error: " + response.response.data.message);
@@ -65,7 +65,7 @@ function Register(props) {
             valid = false;
         }
 
-        // check if the email is of mostly valid form
+        // check if password is valid
         if (!/^[ -~]*$/.test(password) || password.length < 8 || password.length > 60) {
             setIsInvalidPassword(true);
             valid = false;
