@@ -70,6 +70,20 @@ const apiCalls = {
 
     // Recipes
 
+    recipeByID: async recipeID => {
+        try {
+            const response = await axiosInstance.get(`/recipes/${recipeID}`);
+
+            return { success: true, response };
+        } catch (error) {
+            console.log(error);
+
+            isUnauthenticated(error);
+
+            return { success: false, response: error };
+        }
+    },
+
     createdRecipes: async userID => {
         try {
             const response = await axiosInstance.get(`/users/${userID}/createdRecipes`);

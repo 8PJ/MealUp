@@ -17,7 +17,7 @@ import CreatedRecipes from "./routes/recipes/CreatedRecipes";
 import CreateNewRecipe from "./routes/recipes/CreateNewRicpe";
 import MealPlan from "./routes/MealPlan";
 import RecipeSectionSelection from "./components/recipe/RecipeSectionSelection";
-import RecipeDetails from "./routes/recipes/RecipeDetails";
+import FullRecipe from "./routes/recipes/FullRecipe";
 
 import apiCalls from "./api/apiCalls";
 
@@ -62,7 +62,7 @@ function App() {
                             <Route path="followed" element={<FollowedRecipes />} />
                             <Route path="created" element={<CreatedRecipes />} />
                             <Route path="createNew" element={<CreateNewRecipe />} />
-                            <Route path="recipeInfo/:id" element={<RecipeDetails />} />
+                            <Route path="recipeInfo/:id" element={<FullRecipe />} />
                         </Route>
                     ) : null}
                     {userContext.isLoggedIn && <Route path="mealPlan" element={<MealPlan />} />}
