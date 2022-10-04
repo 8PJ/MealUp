@@ -39,6 +39,8 @@ function NewRicpeForm(props) {
     const [invalidIngredientError, setInvalidIngredientError] = useState("");
 
     const addIngredientToList = async () => {
+        setErrorMessage("");
+
         // check if ingredient doesn't already exist
         for (const ingredient of ingredients) {
             if (ingredient.name === ingredientName) {
@@ -48,7 +50,7 @@ function NewRicpeForm(props) {
 
         // check if ingredient name is at least 2 and at most 35 characters long and only contains letters and numbers
         if (
-            !/^[A-Za-z0-9]*$/.test(ingredientName) ||
+            !/^[A-Za-z0-9 ]*$/.test(ingredientName) ||
             ingredientName.length < 2 ||
             ingredientName.length > 35
         ) {
@@ -143,8 +145,8 @@ function NewRicpeForm(props) {
 
         // check if there is at least one ingredient
         if (ingredients.length < 1) {
-            setErrorMessage("Error: must add at least one ingredient.")
-            valid = false
+            setErrorMessage("Error: must add at least one ingredient.");
+            valid = false;
         }
 
         // chech if recipe name of letters, numbers and ! \"#$%&'()*+,-./:;<=>?@[\\]^_{|}~ at least 3 and at most 100 characters long

@@ -1342,7 +1342,7 @@ app.post("/api/v1/ingredients", checkAuthenticated, async (req, res) => {
     }
 
     // check if ingredient_name only contains letters
-    if (!/^[A-Za-z0-9]*$/.test(ingredient_name)) {
+    if (!/^[A-Za-z0-9 ]*$/.test(ingredient_name)) {
         res.status(400).json({ message: "Ingredient name must only contain letters and numbers" });
         return;
     }
