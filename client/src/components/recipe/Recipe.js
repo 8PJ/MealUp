@@ -28,7 +28,7 @@ function Recipe(props) {
             <hr className="recipeDivider" />
             <Container className="recipeIngredients">
                 <ul>
-                    {ingredients.slice(0, 2).map((ingredient) => (
+                    {ingredients.slice(0, 2).map(ingredient => (
                         <li key={ingredient.ingredient_id}>{ingredient.ingredient_name}</li>
                     ))}
                 </ul>
@@ -38,7 +38,7 @@ function Recipe(props) {
                 {props.description.slice(0, 15) + "..."}
             </Container>
             <Container className="d-flex justify-content-center">
-                <NavLink to={"../recipeInfo/1"}>
+                <NavLink to={`../recipeInfo/${props.recipeID}`}>
                     <Button
                         variant="outline-dark"
                         type="button"

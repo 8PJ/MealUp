@@ -60,7 +60,7 @@ function FullRecipe(props) {
                     </ul>
                 </Container>
                 <hr className="recipeDivider" />
-                <Container className="recipeDescription">{recipeInstructions}</Container>
+                <Container className="recipeDescriptionFull">{recipeInstructions}</Container>
             </Container>
         </Container>
     );
