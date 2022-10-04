@@ -1,55 +1,59 @@
+import { useContext, useEffect, useState } from "react";
+
+import { UserContext } from "../../contexts/userContext";
+
 import Carousel from "react-bootstrap/Carousel";
 import Container from "react-bootstrap/Container";
 
 import Recipe from "../recipe/Recipe";
 
+import apiCalls from "../../api/apiCalls";
+
 function MealPlanCarousel() {
+    const userContext = useContext(UserContext);
+    const [mealPlan, setMealPlan] = useState([]);
+
+    useEffect(() => {
+        const getMealPlan = async () => {
+            const { success, response } = await apiCalls.userMealPlan(userContext.authUserID);
+            if (success) {
+                setMealPlan(response.data);
+            } else {
+                console.log(response);
+            }
+        };
+        getMealPlan();
+    }, [userContext]);
+
+    const dateToWord = date => {
+        const now = new Date("2022-10-05");
+        now.setHours(0, 0, 0);
+
+        // const diffDays = Math.floor((date - now) / (1000 * 60 * 60 * 24));
+        const diffDays = Math.floor((date - now) / (1000 * 3600 * 24));
+
+        if (diffDays === 0) {
+            return "Today";
+        } else if (diffDays === 1) {
+            return "Tomorrow";
+        }
+
+        return date.toLocaleDateString();
+    };
+
     return (
         <Container className="mealPlanCarouselContainer">
             <Carousel wrap={false} interval={null}>
-                <Carousel.Item>
-                    <Recipe
-                        recipeID={15}
-                        name="Recipe name"
-                        ingredients={["Ingredient1", "Ingredient2", "Ingredient3"]}
-                        description="Lorem Ipsum is simply dummy text of the printing and typesetting
-                industry. Lorem Ipsum has been the industry's standard dummy
-                text ever since the 1500s, when an unknown printer took a galley
-                of type and scrambled it to make a type specimen book."
-                    />
-                    <Carousel.Caption>
-                        <h3>Today</h3>
-                    </Carousel.Caption>
-                </Carousel.Item>
-                <Carousel.Item>
-                    <Recipe
-                        recipeID={1}
-                        name="Recipe name"
-                        ingredients={["Ingredient1", "Ingredient2", "Ingredient3"]}
-                        description="Lorem Ipsum is simply dummy text of the printing and typesetting
-                industry. Lorem Ipsum has been the industry's standard dummy
-                text ever since the 1500s, when an unknown printer took a galley
-                of type and scrambled it to make a type specimen book."
-                    />
-
-                    <Carousel.Caption>
-                        <h3>Tomorrow</h3>
-                    </Carousel.Caption>
-                </Carousel.Item>
-                <Carousel.Item>
-                    <Recipe
-                        recipeID={1}
-                        name="Recipe name"
-                        ingredients={["Ingredient1", "Ingredient2", "Ingredient3"]}
-                        description="Lorem Ipsum is simply dummy text of the printing and typesetting
-                industry. Lorem Ipsum has been the industry's standard dummy
-                text ever since the 1500s, when an unknown printer took a galley
-                of type and scrambled it to make a type specimen book."
-                    />
-                    <Carousel.Caption>
-                        <h3>Tuesday, 27 Septempber</h3>
-                    </Carousel.Caption>
-                </Carousel.Item>
+                {mealPlan.map(recipe => {
+                    return (
+                        <Carousel.Item key={recipe.day_to_make}>
+                            <Recipe recipeID={recipe.recipe_id} />
+                            <Carousel.Caption>
+                                <h3>{dateToWord(new Date(recipe.day_to_make))}</h3>
+                            </Carousel.Caption>
+                        </Carousel.Item>
+                    );
+                })}
             </Carousel>
         </Container>
     );

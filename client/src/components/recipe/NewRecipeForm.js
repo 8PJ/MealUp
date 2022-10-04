@@ -44,6 +44,10 @@ function NewRicpeForm(props) {
         // check if ingredient doesn't already exist
         for (const ingredient of ingredients) {
             if (ingredient.name === ingredientName) {
+                setIsInvalidIngredientName(true);
+                setInvalidIngredientError(
+                    "Ingredient already added"
+                );
                 return;
             }
         }

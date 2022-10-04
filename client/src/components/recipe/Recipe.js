@@ -7,7 +7,29 @@ import Button from "react-bootstrap/esm/Button";
 import apiCalls from "../../api/apiCalls";
 
 function Recipe(props) {
+    const [recipeName, setRecipeName] = useState("");
+    const [recipeInstructions, setRecipeInstructions] = useState("");
     const [ingredients, setIngredients] = useState([]);
+
+    useEffect(() => {
+        const getInfoIfNotDefined = async () => {
+            const { success, response } = await apiCalls.recipeByID(props.recipeID);
+            if (success) {
+                const { recipe_name, recipe_instructions } = response.data;
+
+                setRecipeName(recipe_name);
+                setRecipeInstructions(recipe_instructions);
+            } else {
+                console.log(response);
+            }
+        };
+        if (!props.name || !props.description) {
+            getInfoIfNotDefined();
+        } else {
+            setRecipeName(props.name);
+            setRecipeInstructions(props.description);
+        }
+    }, [props.recipeID, props.name, props.description]);
 
     useEffect(() => {
         const getRecipeIngredients = async () => {
@@ -24,7 +46,7 @@ function Recipe(props) {
 
     return (
         <Container className="recipeBox" fluid>
-            <h1 className="recipeName">{props.name}</h1>
+            <h1 className="recipeName">{recipeName}</h1>
             <hr className="recipeDivider" />
             <Container className="recipeIngredients">
                 <ul>
@@ -35,10 +57,10 @@ function Recipe(props) {
             </Container>
             <hr className="recipeDivider" />
             <Container className="recipeDescription">
-                {props.description.slice(0, 15) + "..."}
+                {recipeInstructions.slice(0, 15) + "..."}
             </Container>
             <Container className="d-flex justify-content-center">
-                <NavLink to={`../recipeInfo/${props.recipeID}`}>
+                <NavLink to={`/recipes/recipeInfo/${props.recipeID}`}>
                     <Button
                         variant="outline-dark"
                         type="button"

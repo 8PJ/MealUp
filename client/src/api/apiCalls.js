@@ -212,6 +212,21 @@ const apiCalls = {
 
             return { success: false, response: error };
         }
+    },
+
+    // Meal Plan
+    userMealPlan: async userID => {
+        try {
+            const response = await axiosInstance.get(`/users/${userID}/mealPlan`);
+
+            return { success: true, response };
+        } catch (error) {
+            console.log(error);
+
+            isUnauthenticated(error);
+
+            return { success: false, response: error };
+        }
     }
 };
 
