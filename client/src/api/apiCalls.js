@@ -134,6 +134,26 @@ const apiCalls = {
                 recipe_instructions: recipeInstructions
             });
 
+            // follow a newly created recipe
+            apiCalls.followRecipe(creatorID, response.data.recipe_id, true);
+
+            return { success: true, response };
+        } catch (error) {
+            console.log(error);
+
+            isUnauthenticated(error);
+
+            return { success: false, response: error };
+        }
+    },
+
+    followRecipe: async (userID, recipeID, isUsedForMealPlan) => {
+        try {
+            const response = await axiosInstance.post(`users/${userID}/followedRecipes`, {
+                recipe_id: recipeID,
+                is_used_for_meal_plan: isUsedForMealPlan
+            });
+
             return { success: true, response };
         } catch (error) {
             console.log(error);
