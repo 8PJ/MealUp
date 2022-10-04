@@ -36,7 +36,7 @@ function Login(props) {
             setAuthEmail(email);
             setAuthUserID(user_id);
 
-            navigate("../recipes");
+            navigate("../mealPlan");
         } else {
             setErrorMessage("Error: " + response.response.data.message);
         }

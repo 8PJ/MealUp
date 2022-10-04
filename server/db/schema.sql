@@ -43,3 +43,9 @@ CREATE TABLE IF NOT EXISTS user_ingredient_score (
     score BIGINT NOT NULL CHECK(score >= 0) DEFAULT 10,
     PRIMARY KEY (user_id, ingredient_id)
 );
+
+CREATE TABLE IF NOT EXISTS meal_plan (
+    user_id BIGINT REFERENCES app_user (user_id) NOT NULL,
+    recipe_id BIGINT REFERENCES recipe (recipe_id) ON DELETE CASCADE NOT NULL,
+    time_created TIMESTAMPTZ NOT NULL
+);

@@ -9,7 +9,7 @@ function MealPlanCarousel() {
             <Carousel wrap={false} interval={null}>
                 <Carousel.Item>
                     <Recipe
-                        recipeID={1}
+                        recipeID={15}
                         name="Recipe name"
                         ingredients={["Ingredient1", "Ingredient2", "Ingredient3"]}
                         description="Lorem Ipsum is simply dummy text of the printing and typesetting
