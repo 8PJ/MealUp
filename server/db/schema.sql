@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS followed_recipe (
     user_id BIGINT REFERENCES app_user (user_id) NOT NULL,
     recipe_id BIGINT REFERENCES recipe (recipe_id) ON DELETE CASCADE NOT NULL,
     is_used_for_meal_plan BOOLEAN NOT NULL,
+    score_multiplier REAL NOT NULL,
     PRIMARY KEY (user_id, recipe_id)
 );
 
@@ -47,5 +48,6 @@ CREATE TABLE IF NOT EXISTS user_ingredient_score (
 CREATE TABLE IF NOT EXISTS meal_plan (
     user_id BIGINT REFERENCES app_user (user_id) NOT NULL,
     recipe_id BIGINT REFERENCES recipe (recipe_id) ON DELETE CASCADE NOT NULL,
-    time_created TIMESTAMPTZ NOT NULL
+    day_to_make DATE NOT NULL,
+    PRIMARY KEY (user_id, recipe_id, day_to_make)
 );

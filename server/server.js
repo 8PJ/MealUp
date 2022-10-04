@@ -279,6 +279,224 @@ app.get("/api/v1/users/:userID/favouriteIngredients", checkAuthenticated, async 
     }
 });
 
+// return a meal plan for 7 days, generates more if less than 7 days available
+app.get("/api/v1/users/:userID/mealPlan", checkAuthenticated, async (req, res) => {
+    const { userID } = req.params;
+
+    // check if logged in user is authorised (has correct ID or is an admin)
+    if (req.user.userID !== userID.toString() && !req.user.isAdmin) {
+        res.status(403).json({ message: "Unauthorised" });
+        return;
+    }
+
+    // check if all parameters are defined and of the right type
+    if (!isDefined(userID) || isNaN(userID)) {
+        res.status(400).json({ message: "Must provide a valid userID" });
+        return;
+    }
+
+    // check if user exists
+    try {
+        const queryString = "SELECT * FROM app_user WHERE user_id=$1";
+
+        if (!(await existsInDB(queryString, [userID]))) {
+            res.status(404).json({ message: "User not found." });
+            return;
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Server error." });
+        return;
+    }
+
+    // check if user follows at least one recipe
+    try {
+        const queryString = "SELECT * FROM followed_recipe WHERE user_id=$1";
+
+        if (!(await existsInDB(queryString, [userID]))) {
+            res.status(404).json({ message: "User doesn't follow any recipes." });
+            return;
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Server error." });
+        return;
+    }
+
+    try {
+        // delete all plan that is older than 7 dyas
+        const deleteResult = await db.query(
+            `DELETE FROM meal_plan WHERE user_id=$1 AND day_to_make < NOW()::DATE - 7`,
+            [userID]
+        );
+
+        // get all upcoming plan
+        const upcomingRecipes = await db.query(
+            `SELECT recipe_id, day_to_make::text FROM meal_plan WHERE user_id=$1 AND day_to_make >= NOW()::DATE`,
+            [userID]
+        );
+
+        // if there are less than 7 recipes in the upcoming plan, create more
+        if (upcomingRecipes.rowCount < 7) {
+            // get all ingredients of recipes followed by a user
+            const ingredientsOfFollowed = await db.query(
+                `SELECT ingredient_id 
+                 FROM recipe_ingredient INNER JOIN followed_recipe
+                    USING(recipe_id)
+                WHERE user_id=$1`,
+                [userID]
+            );
+
+            // get all scores of ingredients for a user
+            const ingredientScoresDB = await db.query(
+                `SELECT ingredient_id, score FROM user_ingredient_score WHERE user_id=$1`,
+                [userID]
+            );
+
+            // extract ingredients into a map
+            const ingredientScores = new Map();
+
+            for (const row of ingredientScoresDB.rows) {
+                const { ingredient_id, score } = row;
+                ingredientScores.set(ingredient_id, score);
+            }
+
+            for (const row of ingredientsOfFollowed.rows) {
+                const { ingredient_id } = row;
+
+                // if ingredient is not in the map, add it to the map and set its score to 10 (default)
+                if (!ingredientScores.has(ingredient_id)) {
+                    ingredientScores.set(ingredient_id, 10);
+                }
+            }
+
+            const recipeIngredients = new Map(); // maps recipes to a list of ingredients
+
+            // get all followed recipes with their ingredients
+            const followedRecipeIngredients = await db.query(
+                `SELECT recipe_id, score_multiplier, ingredient_id
+                 FROM followed_recipe INNER JOIN recipe_ingredient
+                    USING(recipe_id)
+                 WHERE user_id=$1`,
+                [userID]
+            );
+
+            let allRecipes = new Set(); // recipe id and their score multiplier
+
+            // populate recipeIngredients
+            for (const row of followedRecipeIngredients.rows) {
+                const { recipe_id, score_multiplier, ingredient_id } = row;
+
+                // if recipe has no entries, create a set for it
+                if (!recipeIngredients.has(recipe_id)) {
+                    recipeIngredients.set(recipe_id, new Set());
+                    allRecipes.add({ recipe_id, score_multiplier });
+                }
+
+                recipeIngredients.get(recipe_id).add(ingredient_id);
+            }
+
+            // find the next date to add a recipe (current day or last added day + 1)
+
+            let dateToAdd = new Date();
+
+            if (upcomingRecipes.rowCount > 0) {
+                const lastDateAdded = new Date(
+                    upcomingRecipes.rows[upcomingRecipes.rowCount - 1].day_to_make
+                );
+
+                lastDateAdded.setDate(lastDateAdded.getDate() + 1);
+
+                dateToAdd = new Date(Math.max(dateToAdd, lastDateAdded));
+            }
+
+            // add recipes to a meal plan until there are 7
+            for (let i = upcomingRecipes.rowCount; i < 7; i++) {
+                let bestRecipe = { recipe_id: [...allRecipes][0].recipe_id, score: 0 }; // recipe with the highest score
+
+                // calculate recipe scores
+                for (const recipe of allRecipes) {
+                    let score = 0;
+
+                    for (const ingredient of recipeIngredients.get(recipe.recipe_id)) {
+                        score += ingredientScores.get(ingredient);
+                    }
+
+                    score /= recipeIngredients.get(recipe.recipe_id).size; // calculate average score
+
+                    score *= recipe.score_multiplier; // multiply score by recipe score mutiplier
+
+                    // update bestRecipe
+                    if (score > bestRecipe.score) {
+                        bestRecipe = { recipe_id: recipe.recipe_id, score };
+                    }
+                }
+
+                //add recipe to meal plan
+                const mealPlanInsert = await db.query(
+                    "INSERT INTO meal_plan (user_id, recipe_id, day_to_make) VALUES ($1, $2, $3)",
+                    [userID, bestRecipe.recipe_id, dateToAdd.toLocaleDateString()]
+                );
+
+                dateToAdd.setDate(dateToAdd.getDate() + 1); // add one day to date
+
+                const bestRecipeIngredients = recipeIngredients.get(bestRecipe.recipe_id);
+
+                // update ingredient scores
+                for (const [ingredient, score] of ingredientScores) {
+                    // if ingredient was used in the beset recipe
+                    if (bestRecipeIngredients.has(ingredient)) {
+                        ingredientScores[ingredient] = Math.floor(score / 2);
+                    } else {
+                        ingredientScores[ingredient] = score + 2;
+                    }
+                }
+
+                // update recipe multipliers
+                const newAllRecipes = new Set();
+                for (const { recipe_id, score_multiplier } of allRecipes) {
+                    // if recipe is bestRecipe set it's score to 1
+                    if (recipe_id === bestRecipe.recipe_id) {
+                        newAllRecipes.add({ recipe_id, score_multiplier: 1 });
+                    } else {
+                        newAllRecipes.add({ recipe_id, score_multiplier: score_multiplier + 0.1 });
+                    }
+                }
+                allRecipes = newAllRecipes;
+            }
+
+            // update ingredient scores in the database
+            for (const [ingredient, score] of ingredientScores) {
+                const ingredientScoreUpdate = await db.query(
+                    `UPDATE user_ingredient_score SET score=$1 WHERE ingredient_id=$2 AND user_id=$3`,
+                    [score, ingredient, userID]
+                );
+            }
+
+            // update recipe multipliers
+            for (const { recipe_id, score_multiplier } of allRecipes) {
+                const recipeMultiplierUpdate = await db.query(
+                    `UPDATE followed_recipe SET score_multiplier=$1 WHERE recipe_id=$2 AND user_id=$3`,
+                    [score_multiplier, recipe_id, userID]
+                );
+            }
+
+            // get all upcoming plan
+            const upcomingRecipesAfterAdd = await db.query(
+                `SELECT recipe_id, day_to_make::text FROM meal_plan WHERE user_id=$1 AND day_to_make >= NOW()::DATE`,
+                [userID]
+            );
+
+            res.json(upcomingRecipesAfterAdd.rows);
+        } else {
+            res.json(upcomingRecipes.rows);
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Server error." });
+    }
+});
+
 // POST
 
 // Create a new user
@@ -464,8 +682,8 @@ app.post("/api/v1/users/:userID/followedRecipes", checkAuthenticated, async (req
 
     try {
         const result = await db.query(
-            "INSERT INTO followed_recipe (user_id, recipe_id, is_used_for_meal_plan) VALUES ($1, $2, $3)",
-            [userID, recipe_id, is_used_for_meal_plan]
+            "INSERT INTO followed_recipe (user_id, recipe_id, is_used_for_meal_plan, score_multiplier) VALUES ($1, $2, $3, $4)",
+            [userID, recipe_id, is_used_for_meal_plan, 1]
         );
         res.json({ message: "Recipe successfully followed." });
     } catch (error) {
