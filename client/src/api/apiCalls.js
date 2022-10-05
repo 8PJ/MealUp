@@ -68,6 +68,20 @@ const apiCalls = {
         }
     },
 
+    logoutUser: async () => {
+        try {
+            const response = await axiosInstance.post("/logout");
+
+            return { success: true, response };
+        } catch (error) {
+            console.log(error);
+
+            isUnauthenticated(error);
+
+            return { success: false, response: error };
+        }
+    },
+
     // Recipes
 
     recipeByID: async recipeID => {

@@ -84,6 +84,24 @@ a:hover {
     color: #424f42;
 }
 
+.lastBeforeLogOut {
+    margin-right: 3rem;
+}
+
+@media (max-width: 991px) {
+    .navLink {
+        margin-right: 0.5rem;
+    }
+
+    .lastBeforeLogOut {
+        margin-right: 1.5rem;
+    }
+
+    .navLinks {
+        padding-right: 2rem;
+    }
+}
+
 /* HOME Hero Area */
 
 .heroHeadline {

@@ -1,6 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const bcrypt = require("bcrypt");
+const path = require("path");
 const db = require("./db");
 
 const passport = require("./authSetup/passportAuth");
@@ -15,8 +16,15 @@ require("./authSetup/sessionAuth")(app);
 // middleware
 app.use(express.json());
 
+app.use(express.static(path.join(__dirname, "build")));
+
 // handle JSON.parse errors
 app.use(handleReqestSyntaxError);
+
+// serve react file
+app.get("/", function (req, res) {
+    res.sendFile(path.join(__dirname, "build", "index.html"));
+});
 
 // root route for testing (will later serve react app)
 app.get("/api/v1/test", async (req, res) => {
@@ -1644,6 +1652,11 @@ app.delete("/api/v1/ingredients/:ingredientID", checkAdmin, async (req, res) => 
         console.log(error);
         res.status(500).json({ message: "Server error." });
     }
+});
+
+// serve react file on every other route
+app.get("/*", function (req, res) {
+    res.sendFile(path.join(__dirname, "build", "index.html"));
 });
 
 //////////////////
