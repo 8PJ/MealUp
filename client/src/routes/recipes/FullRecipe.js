@@ -27,8 +27,7 @@ function FullRecipe(props) {
             } else {
                 // if user in not authorised
                 if (response.response.data.message === "Unauthorised") {
-                    // navigate("/recipes");
-                    // TODO navigate to 404
+                    navigate("/notFound");
                 }
                 console.log(response);
             }
