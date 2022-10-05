@@ -12,13 +12,10 @@ function Hero(props) {
             </Container>
             <Container className="heroText">
                 <p>
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam sollicitudin
-                    rhoncus arcu at fermentum. Vivamus a congue eros. Lorem ipsum dolor sit amet,
-                    consectetur adipiscing elit. Vestibulum aliquam hendrerit tellus ut vehicula.
-                    Maecenas ornare auctor feugiat. Suspendisse a lacus odio. Donec tristique enim
-                    vel ligula pharetra porttitor. Aenean libero nunc, convallis eu erat a, lacinia
-                    maximus velit. Cras erat odio, mollis sit amet luctus posuere, porta eget
-                    tortor.
+                    MealUp is here to help you make a meal schedule that promotes variety of
+                    ingredients and recipes. Each day, recipes are selected based on what you've
+                    cooked previously, to have as few repeating ingredients as possible. Simply
+                    submit the recipes that you already use and MealUp will do all the rest.
                 </p>
             </Container>
             <Container className="d-flex justify-content-center heroCallToAction">

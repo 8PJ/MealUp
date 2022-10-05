@@ -1,5 +1,5 @@
 import { useContext, useEffect } from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import { UserContext } from "./contexts/userContext";
 
@@ -18,6 +18,7 @@ import CreateNewRecipe from "./routes/recipes/CreateNewRicpe";
 import MealPlan from "./routes/MealPlan";
 import RecipeSectionSelection from "./components/recipe/RecipeSectionSelection";
 import FullRecipe from "./routes/recipes/FullRecipe";
+import NotFound from "./routes/NotFound";
 
 import apiCalls from "./api/apiCalls";
 
@@ -63,9 +64,11 @@ function App() {
                             <Route path="created" element={<CreatedRecipes />} />
                             <Route path="createNew" element={<CreateNewRecipe />} />
                             <Route path="recipeInfo/:id" element={<FullRecipe />} />
+                            <Route path="*" element={<Navigate to="/notFound" replace />} />
                         </Route>
                     ) : null}
                     {userContext.isLoggedIn && <Route path="mealPlan" element={<MealPlan />} />}
+                    <Route path="*" element={<NotFound />} />
                 </Routes>
             </div>
             <FooterComp />

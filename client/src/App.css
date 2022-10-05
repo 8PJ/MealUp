@@ -665,3 +665,14 @@ a:hover {
         min-width: 95%;
     }
 }
+
+/* Not Found */
+
+.notFoundContainer {
+    margin-top: 2rem;
+
+    font-family: "Roboto", sans-serif;
+    font-size: 7vw;
+
+    color: #e6e6e6;
+}
