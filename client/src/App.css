@@ -325,7 +325,7 @@ a:hover {
 
 @media (max-width: 768px) {
     .breadCrumbLink {
-        font-size: 1rem;
+        font-size: 1.1rem;
     }
 
     .breadcrumb-item + .breadcrumb-item::before {
@@ -631,4 +631,37 @@ a:hover {
     font-size: 1.1rem;
 
     word-wrap: break-word;
+}
+
+@media (max-width: 992px) {
+    .recipeInfo {
+        max-width: 60%;
+        min-width: 60%;
+    }
+}
+
+@media (max-width: 768px) {
+    .recipeInfo {
+        max-width: 70%;
+        min-width: 70%;
+    }
+}
+
+@media (max-width: 576px) {
+    .recipeInfo {
+        max-width: 80%;
+        min-width: 80%;
+    }
+
+    .recipeBoxFull {
+        padding: 1rem;
+        padding-bottom: 2rem;
+    }
+}
+
+@media (max-width: 464px) {
+    .recipeInfo {
+        max-width: 95%;
+        min-width: 95%;
+    }
 }
