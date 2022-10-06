@@ -590,7 +590,7 @@ a:hover {
 
 @media (max-width: 576px) {
     .mealPlanCarouselContainer {
-        margin-top: 1rem;
+        margin-top: 5rem;
 
         width: 70%;
     }

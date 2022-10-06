@@ -27,12 +27,12 @@ function MealPlanCarousel() {
     }, [userContext]);
 
     const dateToWord = date => {
-        const now = new Date("2022-10-05");
+        const now = new Date();
         now.setHours(0, 0, 0);
 
         // const diffDays = Math.floor((date - now) / (1000 * 60 * 60 * 24));
         const diffDays = Math.floor((date - now) / (1000 * 3600 * 24));
-
+        console.log(diffDays, (date - now) / (1000 * 3600 * 24));
         if (diffDays === 0) {
             return "Today";
         } else if (diffDays === 1) {
