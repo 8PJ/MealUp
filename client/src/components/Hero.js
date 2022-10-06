@@ -1,9 +1,14 @@
+import { useContext } from "react";
 import { Link } from "react-router-dom";
+
+import { UserContext } from "../contexts/userContext";
 
 import Container from "react-bootstrap/Container";
 import Button from "react-bootstrap/Button";
 
 function Hero(props) {
+    const usercontext = useContext(UserContext);
+
     return (
         <>
             <Container className="heroHeadline">
@@ -19,7 +24,7 @@ function Hero(props) {
                 </p>
             </Container>
             <Container className="d-flex justify-content-center heroCallToAction">
-                <Link to="/register">
+                <Link to={!usercontext.isLoggedIn ? "/register" : "/recipes/followed"}>
                     <Button variant="outline-dark" type="button" className="heroButton" size="lg">
                         Get Started
                     </Button>
