@@ -6,6 +6,8 @@ import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 
 import Recipe from "../../components/recipe/Recipe";
+import NoData from "../../components/NoData";
+
 import apiCalls from "../../api/apiCalls";
 
 function FollowedRecipes(props) {
@@ -26,7 +28,7 @@ function FollowedRecipes(props) {
         getCreatedRecipes();
     }, [userContext.authUserID]);
 
-    return (
+    return createdRecipes.length !== 0 ? (
         <Row className="recipeWall">
             {createdRecipes.map(recipe => {
                 return (
@@ -40,6 +42,12 @@ function FollowedRecipes(props) {
                 );
             })}
         </Row>
+    ) : (
+        <NoData
+            message="You currently don't have any recipes created. You can create a new recipe now!"
+            link="/recipes/createNew"
+            linkText="Create new recipe"
+        />
     );
 }
 

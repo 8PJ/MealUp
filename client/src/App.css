@@ -703,8 +703,10 @@ a:hover {
     color: #e6e6e6;
 
     margin-top: 5rem;
-    
+
     max-width: 50%;
+
+    text-align: center;
 }
 
 .noContentActionButtonContainer {
