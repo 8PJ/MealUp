@@ -694,3 +694,23 @@ a:hover {
 
     color: #e6e6e6;
 }
+
+/* No Content */
+
+.noContentMessage {
+    font-size: 2rem;
+
+    color: #e6e6e6;
+
+    margin-top: 5rem;
+    
+    max-width: 50%;
+}
+
+.noContentActionButtonContainer {
+    margin-top: 4rem;
+}
+
+.noDataActionButton {
+    font-size: 1.5rem;
+}

@@ -6,6 +6,7 @@ import Carousel from "react-bootstrap/Carousel";
 import Container from "react-bootstrap/Container";
 
 import Recipe from "../recipe/Recipe";
+import NoData from "../NoData";
 
 import apiCalls from "../../api/apiCalls";
 
@@ -41,7 +42,7 @@ function MealPlanCarousel() {
         return date.toLocaleDateString();
     };
 
-    return (
+    return mealPlan.length !== 0 ? (
         <Container className="mealPlanCarouselContainer">
             <Carousel wrap={false} interval={null}>
                 {mealPlan.map(recipe => {
@@ -56,6 +57,14 @@ function MealPlanCarousel() {
                 })}
             </Carousel>
         </Container>
+    ) : (
+        <NoData
+            message="You currently don't follow any recipes, you 
+            need to follow at least one recipe to generate a meal plan.
+            You can do so by creating a new recipe."
+            link="/recipes/createNew"
+            linkText="Create new recipe"
+        />
     );
 }
 
