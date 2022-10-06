@@ -32,7 +32,7 @@ function NavbarComp(props) {
                         <Nav.Link
                             as={NavLink}
                             className="navLink"
-                            to={userContext.isLoggedIn ? "recipes" : "register"}
+                            to={userContext.isLoggedIn ? "recipes/followed" : "register"}
                         >
                             {userContext.isLoggedIn ? "Recipes" : "Register"}
                         </Nav.Link>

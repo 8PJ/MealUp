@@ -25,8 +25,11 @@ function FullRecipe(props) {
                 setRecipeName(recipe_name);
                 setRecipeInstructions(recipe_instructions);
             } else {
-                // if user in not authorised
-                if (response.response.data.message === "Unauthorised") {
+                // if user in not authorised or recipe doesn't exist
+                if (
+                    response.response.data.message === "Unauthorised" ||
+                    response.response.data.message === "Recipe not found."
+                ) {
                     navigate("/notFound");
                 }
                 console.log(response);

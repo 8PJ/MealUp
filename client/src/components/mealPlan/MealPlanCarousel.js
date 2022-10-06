@@ -12,13 +12,16 @@ import apiCalls from "../../api/apiCalls";
 
 function MealPlanCarousel() {
     const userContext = useContext(UserContext);
+
     const [mealPlan, setMealPlan] = useState([]);
+    const [gotData, setGotData] = useState(false);
 
     useEffect(() => {
         const getMealPlan = async () => {
             const { success, response } = await apiCalls.userMealPlan(userContext.authUserID);
             if (success) {
                 setMealPlan(response.data);
+                setGotData(true);
             } else {
                 console.log(response);
             }
@@ -32,7 +35,7 @@ function MealPlanCarousel() {
 
         // const diffDays = Math.floor((date - now) / (1000 * 60 * 60 * 24));
         const diffDays = Math.floor((date - now) / (1000 * 3600 * 24));
-        console.log(diffDays, (date - now) / (1000 * 3600 * 24));
+
         if (diffDays === 0) {
             return "Today";
         } else if (diffDays === 1) {
@@ -58,13 +61,15 @@ function MealPlanCarousel() {
             </Carousel>
         </Container>
     ) : (
-        <NoData
-            message="You currently don't follow any recipes, you 
-            need to follow at least one recipe to generate a meal plan.
-            You can do so by creating a new recipe."
-            link="/recipes/createNew"
-            linkText="Create new recipe"
-        />
+        gotData && (
+            <NoData
+                message="You currently don't follow any recipes, you 
+                         need to follow at least one recipe to generate a meal plan.
+                         You can do so by creating a new recipe."
+                link="/recipes/createNew"
+                linkText="Create new recipe"
+            />
+        )
     );
 }
 

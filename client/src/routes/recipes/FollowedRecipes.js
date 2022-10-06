@@ -14,12 +14,14 @@ function FollowedRecipes(props) {
     const userContext = useContext(UserContext);
 
     const [createdRecipes, setCreatedRecipes] = useState([]);
+    const [gotData, setGotData] = useState(false);
 
     useEffect(() => {
         const getCreatedRecipes = async () => {
             const { success, response } = await apiCalls.followedRecipes(userContext.authUserID);
             if (success) {
                 setCreatedRecipes(response.data);
+                setGotData(true);
             } else {
                 console.log(response);
             }
@@ -43,12 +45,13 @@ function FollowedRecipes(props) {
             })}
         </Row>
     ) : (
-        <NoData
-            message="You currently don't follow any recipes, 
-            you can follow recipes by creating them."
-            link="/recipes/createNew"
-            linkText="Create new recipe"
-        />
+        gotData && (
+            <NoData
+                message="You currently don't follow any recipes, you can follow recipes by creating them."
+                link="/recipes/createNew"
+                linkText="Create new recipe"
+            />
+        )
     );
 }
 
