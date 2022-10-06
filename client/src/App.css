@@ -134,6 +134,8 @@ a:hover {
     color: #e6e6e6;
 
     margin-bottom: 3rem;
+
+    text-align: justify;
 }
 
 .heroCallToAction {
@@ -195,7 +197,7 @@ a:hover {
 @media (max-width: 576px) {
     .heroHeadline,
     .heroText {
-        max-width: 80%;
+        max-width: 90%;
     }
 
     .heroHeadline {
@@ -221,15 +223,15 @@ a:hover {
 
 @media (max-width: 464px) {
     .heroMessage {
-        font-size: 1.5rem;
+        font-size: 1.8rem;
     }
 
     .heroMessage2 {
-        font-size: 1rem;
+        font-size: 1.3rem;
     }
 
     .heroText {
-        font-size: 0.8rem;
+        font-size: 0.9rem;
     }
 
     .heroButton {
@@ -343,7 +345,7 @@ a:hover {
 
 @media (max-width: 768px) {
     .breadCrumbLink {
-        font-size: 1.1rem;
+        font-size: 1.2rem;
     }
 
     .breadcrumb-item + .breadcrumb-item::before {
@@ -715,4 +717,66 @@ a:hover {
 
 .noDataActionButton {
     font-size: 1.5rem;
+}
+
+@media (max-width: 992px) {
+    .noContentMessage {
+        font-size: 1.5rem;
+
+        margin-top: 3rem;
+
+        max-width: 60%;
+    }
+
+    .noContentActionButtonContainer {
+        margin-top: 4rem;
+    }
+
+    .noDataActionButton {
+        font-size: 1.3rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .noContentMessage {
+        font-size: 1.2rem;
+
+        margin-top: 2rem;
+
+        max-width: 70%;
+    }
+
+    .noContentActionButtonContainer {
+        margin-top: 3rem;
+    }
+
+    .noDataActionButton {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .noContentMessage {
+        font-size: 1.1rem;
+
+        margin-top: 6rem;
+
+        max-width: 80%;
+    }
+
+    .noContentActionButtonContainer {
+        margin-top: 4rem;
+    }
+}
+
+@media (max-width: 464px) {
+    .noContentMessage {
+        font-size: 1rem;
+
+        max-width: 85%;
+    }
+
+    .noContentActionButtonContainer {
+        margin-top: 4rem;
+    }
 }
