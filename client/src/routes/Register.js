@@ -26,6 +26,8 @@ function Register(props) {
     const [password, setPassword] = useState("");
     const [isInvalidPassword, setIsInvalidPassword] = useState();
 
+    const [submitting, setSubmitting] = useState(false);
+
     const createNewUserRedirect = async () => {
         const { success, response } = await apiCalls.createUser(username, email, password);
 
@@ -47,6 +49,8 @@ function Register(props) {
 
     const handleSubmit = event => {
         event.preventDefault();
+
+        setSubmitting(true);
 
         // clear server error message
         setErrorMessage("");
@@ -75,6 +79,8 @@ function Register(props) {
         if (valid) {
             createNewUserRedirect();
         }
+
+        setSubmitting(false);
     };
 
     // set isInvalidUsername to false when it becomes valid
@@ -150,8 +156,8 @@ function Register(props) {
                         characters long.
                     </Form.Control.Feedback>
                 </Form.Group>
-                <Button variant="outline-dark" type="submit">
-                    Submit
+                <Button variant="outline-dark" type="submit" disabled={submitting}>
+                    {!submitting ? "Submit" : "Submitting..."}
                 </Button>
             </Form>
         </Container>

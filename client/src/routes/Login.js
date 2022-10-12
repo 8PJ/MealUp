@@ -20,8 +20,12 @@ function Login(props) {
 
     const [password, setPassword] = useState("");
 
+    const [submitting, setSubmitting] = useState(false);
+
     const handleSubmit = async event => {
         event.preventDefault();
+
+        setSubmitting(true);
         setErrorMessage("");
 
         const { success, response } = await apiCalls.loginUser(username, password);
@@ -40,6 +44,8 @@ function Login(props) {
         } else {
             setErrorMessage("Error: " + response.response.data.message);
         }
+
+        setSubmitting(false);
     };
 
     return (
@@ -68,8 +74,8 @@ function Login(props) {
                         onChange={e => setPassword(e.target.value)}
                     />
                 </Form.Group>
-                <Button variant="outline-dark" type="submit">
-                    Submit
+                <Button variant="outline-dark" type="submit" disabled={submitting}>
+                    {!submitting ? "Submit" : "Submitting..."}
                 </Button>
             </Form>
         </Container>

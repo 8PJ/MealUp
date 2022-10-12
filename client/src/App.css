@@ -780,3 +780,65 @@ a:hover {
         margin-top: 4rem;
     }
 }
+
+.mealPlanButtoncontainer {
+    margin-top: 3rem;
+}
+
+.showMealplanButton {
+    font-size: 2rem;
+}
+
+.mealPlanWarning {
+    font-size: 1.5rem;
+
+    margin-top: 20vh;
+
+    color: #670312;
+
+    text-align: center;
+
+    max-width: 50%;
+}
+
+@media (max-width: 992px) {
+    .showMealplanButton {
+        font-size: 1.6rem;
+    }
+
+    .mealPlanWarning {
+        font-size: 1.2rem;
+
+        max-width: 60%;
+    }
+}
+
+@media (max-width: 768px) {
+    .showMealplanButton {
+        font-size: 1.3rem;
+    }
+
+    .mealPlanButtoncontainer {
+        margin-top: 2rem;
+    }
+
+    .mealPlanWarning {
+        font-size: 1.1rem;
+
+        max-width: 70%;
+    }
+}
+
+@media (max-width: 576px) {
+    .mealPlanWarning {
+        font-size: 1rem;
+
+        max-width: 80%;
+    }
+}
+
+@media (max-width: 464px) {
+    .mealPlanWarning {
+        max-width: 90%;
+    }
+}

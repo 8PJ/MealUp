@@ -595,7 +595,7 @@ app.post("/api/v1/users", async (req, res) => {
     // ----- create user -----
 
     // hash password
-    const saltRounds = 12;
+    const saltRounds = 8;
     const hash = await bcrypt.hash(password, saltRounds);
 
     // create user
